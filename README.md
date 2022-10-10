@@ -79,3 +79,17 @@ getAdminExclusiveData(): string {
 }
 // ...
 ```
+
+# Customization
+The library is highly customizable through the usage of Bindings.
+
+Almost everything can be overriden by you when you provide a value for the specific Binding:
+
+```typescript
+import { LbxJwtBindings } from 'lbx-jwt';
+// ...
+this.bind(LbxJwtBindings.ACCESS_TOKEN_EXPIRES_IN_MS).to(1234567);
+// ...
+```
+
+All bindings can be accessed under `LbxJwtBindings`.

@@ -1,0 +1,125 @@
+<!doctype html>
+
+<head>
+    <meta name="viewport" content="width=device-width">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    {{#if title}}
+        <title>{{title}}</title>
+    {{/if}}
+
+    <style>
+        * {
+            font-family: {{defaultFontFamily}};
+        }
+        .cta {
+            {{buttonCss}}
+        }
+        .cta:hover {
+            {{buttonHoverCss}}
+        }
+    </style>
+    <!--[if mso]>
+    <style>
+        table {border-collapse:collapse;border-spacing:0;border:none;margin:0;}
+        div, td {padding:0;}
+        div {margin:0 !important;}
+    </style>
+    <noscript>
+        <xml>
+            <o:OfficeDocumentSettings>
+            <o:PixelsPerInch>96</o:PixelsPerInch>
+            </o:OfficeDocumentSettings>
+        </xml>
+    </noscript>
+    <![endif]-->
+</head>
+
+<body style="margin: 0; padding: 0; word-spacing: normal; background-color: {{backgroundColor}};">
+    <div role="content" aria-roledescription="email" style="text-size-adjust: 100%; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; background-color: {{backgroundColor}};">
+        <table role="presentation" style="width: 100%; border: none; border-spacing: 0;">
+            <tr>
+                <td align="center" style="padding: 0;">
+                    <!--[if mso]>
+                        <table role="presentation" align="center" style="width: 600px;">
+                            <tr>
+                                <td>
+                    <![endif]-->
+                        <table role="presentation" style="
+                            width: 94%;
+                            max-width: 600px;
+                            border: none;
+                            border-spacing: 0;
+                            text-align: left;
+                            font-family: {{defaultFontFamily}};
+                            font-size: 16px;
+                            line-height: 22px;
+                            color: {{textColor}};
+                            background-color: {{contentBackgroundColor}};
+                            margin-top: 20px;
+                            margin-bottom: 20px;
+                        ">
+                            <tr>
+                                <td style="text-align: center; padding: 30px;">
+                                    <img src="{{logoHeaderUrl}}" width="{{logoHeaderWidth}}" style="width: {{logoHeaderWidth}}px; max-width: 80%; height: auto;" alt="Logo">
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding-left: 30px; padding-right: 30px;">
+                                    <h1 style="margin-top: 0px; color: {{headlineTextColor}}; text-align: center;">{{headline}}</h1>
+                                    {{{content}}}
+                                </td>
+                            </tr>
+                        </table>
+                    <!--[if mso]>
+                                </td>
+                            </tr>
+                        </table>
+                    <![endif]-->
+                </td>
+            </tr>
+            <tr>
+                <td align="center" style="padding: 0;">
+                    <!--[if mso]>
+                        <table role="presentation" align="center" style="width: 600px;">
+                            <tr>
+                                <td>
+                    <![endif]-->
+                        <table role="presentation" style="
+                            width: 94%;
+                            max-width: 600px;
+                            border: none;
+                            border-spacing: 0;
+                            text-align: left;
+                            font-family: {{defaultFontFamily}};
+                            font-size: 16px;
+                            line-height: 22px;
+                            color: {{textColor}};
+                            margin-bottom: 20px;
+                        ">
+                            <tr>
+                                <td style="text-align: center; padding-left: 30px; padding-right: 30px;">
+                                    <img src="{{logoFooterUrl}}" width="{{logoFooterWidth}}" style="width: {{logoFooterWidth}}px; max-width: 80%; height: auto;" alt="Logo">
+                                </td>
+                            </tr>
+                            {{#each addressLines}}
+                            <tr>
+                                <td style="padding-left: 30px; padding-right: 30px; text-align: center;">
+                                    <span style="color: {{../addressLinesColor}}; font-size: 12px; text-align: center;">
+                                        {{this}}
+                                    </span>
+                                </td>
+                            </tr>
+                            {{/each}}
+                        </table>
+                    <!--[if mso]>
+                                </td>
+                            </tr>
+                        </table>
+                    <![endif]-->
+                </td>
+            </tr>
+        </table>
+    </div>
+</body>
+
+</html>

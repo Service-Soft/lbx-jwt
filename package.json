@@ -1,0 +1,77 @@
+{
+    "name": "lbx-jwt",
+    "description": "Provides JWT authentication for loopback applications. Includes storing roles inside tokens and handling refreshing. Built-in reuse detection.",
+    "version": "1.0.0",
+    "keywords": [
+        "lb4",
+        "LoopBack",
+        "LoopBack 4",
+        "authentication",
+        "authorization",
+        "jwt",
+        "jsonwebtoken",
+        "refresh token",
+        "reuse detection",
+        "password reset"
+    ],
+    "license": "MIT",
+    "files": [
+        "README.md",
+        "dist",
+        "src",
+        "!*/__tests__"
+    ],
+    "main": "dist/index.js",
+    "author": "Tim Fabian",
+    "scripts": {
+        "build": "lb-tsc && npm run copy:readme && npm run copy:license && npm run copy:contributing && npm run copy:mailTemplates",
+        "build:watch": "npm run build --watch",
+        "lint": "eslint --report-unused-disable-directives . --max-warnings 0",
+        "lint:fix": "eslint --report-unused-disable-directives . --fix",
+        "pretest": "npm run rebuild",
+        "test": "lb-mocha --allow-console-logs \"dist/__tests__\"",
+        "posttest": "npm run lint",
+        "test:dev": "lb-mocha --allow-console-logs dist/__tests__/**/*.js && npm run posttest",
+        "clean": "lb-clean dist *.tsbuildinfo .eslintcache",
+        "rebuild": "npm run clean && npm run build",
+        "copy:readme": "cp ./README.md dist/README.md",
+        "copy:license": "cp ./LICENSE.md dist/LICENSE.md",
+        "copy:contributing": "cp ./CONTRIBUTING.md dist/CONTRIBUTING.md",
+        "copy:mailTemplates": "cp -r ./src/services/mail/templates dist/services/mail/templates"
+    },
+    "peerDependencies": {
+        "@loopback/authentication": "^9.0.3",
+        "@loopback/authorization": "^0.12.3",
+        "@loopback/core": "^4.0.3",
+        "@loopback/rest": "^12.0.3",
+        "@loopback/security": "^0.8.3",
+        "handlebars": "^4.7.7",
+        "nodemailer": "^6.8.0"
+    },
+    "dependencies": {
+        "bcryptjs": "^2.4.3",
+        "jsonwebtoken": "^8.5.1",
+        "tslib": "^2.4.0"
+    },
+    "devDependencies": {
+        "@loopback/authentication": "^9.0.3",
+        "@loopback/boot": "^5.0.3",
+        "@loopback/build": "^9.0.3",
+        "@loopback/core": "^4.0.3",
+        "@loopback/repository": "^5.0.3",
+        "@loopback/rest": "^12.0.3",
+        "@loopback/rest-explorer": "^5.0.3",
+        "@loopback/security": "^0.8.3",
+        "@loopback/service-proxy": "^5.0.3",
+        "@loopback/testlab": "^5.0.3",
+        "@types/bcryptjs": "2.4.2",
+        "@types/jsonwebtoken": "^8.5.9",
+        "@types/node": "^18.8.3",
+        "@types/nodemailer": "^6.4.6",
+        "eslint": "^8.25.0",
+        "eslint-config-service-soft": "^1.0.8",
+        "handlebars": "^4.7.7",
+        "nodemailer": "^6.8.0",
+        "typescript": "~4.8.4"
+    }
+}

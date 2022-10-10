@@ -1,0 +1,53 @@
+{
+    "root": true,
+    "extends": "eslint-config-service-soft",
+    "overrides": [
+        {
+            "files": [
+                "*.ts"
+            ],
+            "parserOptions": {
+                "project": [
+                    "tsconfig.json"
+                ],
+                "createDefaultProgram": true
+            },
+            "rules": {
+                "@cspell/spellchecker": [
+                    "warn",
+                    {
+                        "customWordListFile": "./cspell.words.txt"
+                    }
+                ]
+            }
+        },
+        {
+            "files": [
+                "*.repository.ts"
+            ],
+            "parserOptions": {
+                "project": [
+                    "tsconfig.json"
+                ],
+                "createDefaultProgram": true
+            },
+            "rules": {
+                "jsdoc/require-jsdoc": "off"
+            }
+        },
+        {
+            "files": [
+                "*.model.ts"
+            ],
+            "parserOptions": {
+                "project": [
+                    "tsconfig.json"
+                ],
+                "createDefaultProgram": true
+            },
+            "rules": {
+                "@typescript-eslint/no-empty-interface": "off"
+            }
+        }
+    ]
+}

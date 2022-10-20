@@ -31,7 +31,7 @@ export abstract class BaseMailService<
     /**
      * The path to the base email template.
      */
-    private readonly BASE_MAIL_TEMPLATE_PATH: string = `${LBX_JWT_MAIL_TEMPLATE_DIRECTORY}/base-mail.hbs`;
+    protected readonly BASE_MAIL_TEMPLATE_PATH: string = `${LBX_JWT_MAIL_TEMPLATE_DIRECTORY}/base-mail.hbs`;
 
     /**
      * The email transporter that sends all the emails.

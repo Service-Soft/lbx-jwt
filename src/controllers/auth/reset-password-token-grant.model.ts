@@ -13,8 +13,4 @@ export class ResetPasswordTokenGrant extends Model {
         required: true
     })
     value: string;
-
-    constructor(data?: Partial<ResetPasswordTokenGrant>) {
-        super(data);
-    }
 }

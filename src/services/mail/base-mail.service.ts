@@ -8,7 +8,7 @@ import { BaseDefaultDynamicReplacements, BaseDefaultStaticReplacements } from '.
 import { ResetPasswordMailReplacements } from './reset-password-mail.replacements';
 import path from 'path';
 
-export const LBX_JWT_MAIL_TEMPLATE_DIRECTORY: string = path.join(__dirname, '../mail/templates');
+export const LBX_JWT_MAIL_TEMPLATE_DIRECTORY: string = path.join(__dirname, './templates');
 
 /**
  * A service that handles sending emails to users.

@@ -21,11 +21,11 @@ export class DbDataSource extends juggler.DataSource implements LifeCycleObserve
      * The name of the datasource.
      * Needed by loopback internally.
      */
-    static dataSourceName = 'db';
+    static dataSourceName: string = 'db';
     /**
      * The default configuration to use when nothing was provided.
      */
-    static readonly defaultConfig = config;
+    static readonly defaultConfig: object = config;
 
     constructor(
         @inject('datasources.config.db', { optional: true })

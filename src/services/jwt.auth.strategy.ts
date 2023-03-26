@@ -10,7 +10,7 @@ import { LbxJwtBindings } from '../keys';
 export class JwtAuthenticationStrategy implements AuthenticationStrategy {
 
     // eslint-disable-next-line jsdoc/require-jsdoc
-    readonly name = 'jwt';
+    readonly name: string = 'jwt';
 
     constructor(
         @inject(LbxJwtBindings.ACCESS_TOKEN_SERVICE)

@@ -33,7 +33,7 @@ export class SecuritySpecEnhancer implements OASEnhancer {
     /**
      * The name of the enhancer.
      */
-    readonly name = 'bearerAuth';
+    readonly name: string = 'bearerAuth';
 
 
     /**

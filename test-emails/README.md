@@ -1,0 +1,1 @@
+This folder is for checking generated html emails.

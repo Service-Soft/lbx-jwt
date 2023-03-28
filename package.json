@@ -1,7 +1,7 @@
 {
     "name": "lbx-jwt",
     "description": "Provides JWT authentication for loopback applications. Includes storing roles inside tokens and handling refreshing. Built-in reuse detection.",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "keywords": [
         "lb4",
         "LoopBack",

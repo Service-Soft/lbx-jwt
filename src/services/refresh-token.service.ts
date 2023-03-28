@@ -4,13 +4,13 @@ import { HttpErrors } from '@loopback/rest';
 import { securityId } from '@loopback/security';
 import { JwtUtilities } from '../encapsulation/jwt.utilities';
 import { LbxJwtBindings } from '../keys';
-import { RefreshToken, RefreshTokenWithRelations, BaseUser } from '../models';
+import { BaseUser, RefreshToken, RefreshTokenWithRelations } from '../models';
 import { BaseUserProfile } from '../models/base-user-profile.model';
 import { BaseUserRepository, RefreshTokenRepository } from '../repositories';
 import { DefaultEntityOmitKeys, TokenObject } from '../types';
-import { convertMsToSeconds } from './convert-ms-to-seconds.function';
-import { BaseUserService } from './base-user.service';
 import { AccessTokenService } from './access-token.service';
+import { BaseUserService } from './base-user.service';
+import { convertMsToSeconds } from './convert-ms-to-seconds.function';
 
 /**
  * The info stored inside an auth token.
@@ -128,7 +128,7 @@ export class RefreshTokenService<RoleType extends string> {
             await this.refreshTokenRepository.create(refreshTokenData, { transaction: transaction });
             await this.refreshTokenRepository.updateById(refreshToken.id, { blacklisted: true }, { transaction: transaction });
 
-            await this.refreshTokenRepository.deleteAll({ expirationDate: { lte: new Date() } });
+            await this.refreshTokenRepository.deleteAll({ expirationDate: { lte: new Date() } }, { transaction: transaction });
 
             await transaction.commit();
             return {

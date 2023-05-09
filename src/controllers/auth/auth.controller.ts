@@ -1,20 +1,19 @@
 import { inject } from '@loopback/core';
-import { getModelSchemaRef, HttpErrors, post, requestBody } from '@loopback/rest';
-import { BaseUser, BaseUserProfile, BaseUserWithRelations, Credentials, PasswordResetTokenWithRelations } from '../../models';
-import { authenticate } from '@loopback/authentication';
-import { LbxJwtBindings } from '../../keys';
-import { AccessTokenService, BaseUserService, RefreshTokenService } from '../../services';
-import { LoginCredentials } from './login-credentials.model';
-import { DefaultEntityOmitKeys, TokenObject } from '../../types';
-import { EncodedJwt, JwtUtilities } from '../../encapsulation/jwt.utilities';
-import { RequestResetPasswordGrant } from './request-reset-password-grant.model';
-import { AuthData } from './auth-data.model';
-import { RefreshGrant } from './refresh-grant.model';
 import { IsolationLevel, juggler } from '@loopback/repository';
-import { BaseUserRepository, CredentialsRepository, PasswordResetTokenRepository, RefreshTokenRepository } from '../../repositories';
-import { ResetPasswordTokenGrant } from './reset-password-token-grant.model';
+import { getModelSchemaRef, HttpErrors, post, requestBody } from '@loopback/rest';
 import { BcryptUtilities } from '../../encapsulation/bcrypt.utilities';
+import { EncodedJwt, JwtUtilities } from '../../encapsulation/jwt.utilities';
+import { LbxJwtBindings } from '../../keys';
+import { BaseUser, BaseUserProfile, BaseUserWithRelations, Credentials, PasswordResetTokenWithRelations } from '../../models';
+import { BaseUserRepository, CredentialsRepository, PasswordResetTokenRepository, RefreshTokenRepository } from '../../repositories';
+import { AccessTokenService, BaseUserService, RefreshTokenService } from '../../services';
+import { DefaultEntityOmitKeys, TokenObject } from '../../types';
+import { AuthData } from './auth-data.model';
 import { ConfirmResetPassword } from './confirm-reset-password.model';
+import { LoginCredentials } from './login-credentials.model';
+import { RefreshGrant } from './refresh-grant.model';
+import { RequestResetPasswordGrant } from './request-reset-password-grant.model';
+import { ResetPasswordTokenGrant } from './reset-password-token-grant.model';
 
 /**
  * Exposes endpoints regarding authentication and authorization (eg. Login or resetting a users password).
@@ -148,7 +147,6 @@ export class LbxJwtAuthController<RoleType extends string> {
      *
      * @param refreshGrant - The refresh token of the user that should be logged out.
      */
-    @authenticate('jwt')
     @post(
         'logout',
         {

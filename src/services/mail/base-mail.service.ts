@@ -1,12 +1,12 @@
 import { readFileSync, writeFileSync } from 'fs';
+import { Transporter } from 'nodemailer';
+import path from 'path';
 import { HandlebarsUtilities } from '../../encapsulation/handlebars.utilities';
 import { BaseUserWithRelations } from '../../models';
 import { PasswordResetTokenWithRelations } from '../../models/password-reset-token.model';
-import { Transporter } from 'nodemailer';
-import { Email } from './email.model';
 import { BaseDefaultDynamicReplacements, BaseDefaultStaticReplacements } from './base-default.replacements';
+import { Email } from './email.model';
 import { ResetPasswordMailReplacements } from './reset-password-mail.replacements';
-import path from 'path';
 
 export const LBX_JWT_MAIL_TEMPLATE_DIRECTORY: string = path.join(__dirname, './templates');
 
@@ -52,7 +52,7 @@ export abstract class BaseMailService<
     /**
      * The url for the logo that is placed inside the header.
      */
-    protected abstract readonly LOGO_HEADER_URL: string;
+    protected readonly LOGO_HEADER_URL?: string;
 
     /**
      * The width of the logo placed inside the header.
@@ -62,7 +62,7 @@ export abstract class BaseMailService<
     /**
      * The url for the logo that is placed inside the footer.
      */
-    protected abstract readonly LOGO_FOOTER_URL: string;
+    protected readonly LOGO_FOOTER_URL?: string;
 
     /**
      * The width of the logo placed inside the footer.

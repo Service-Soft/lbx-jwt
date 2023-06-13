@@ -27,9 +27,9 @@ class MailService extends BaseMailService<Roles> {
     // eslint-disable-next-line jsdoc/require-jsdoc
     protected readonly SAVED_EMAILS_PATH: string = './test-emails';
     // eslint-disable-next-line jsdoc/require-jsdoc
-    protected readonly LOGO_HEADER_URL: string = 'https://via.placeholder.com/165x165';
+    protected override readonly LOGO_HEADER_URL: string = 'https://via.placeholder.com/165x165';
     // eslint-disable-next-line jsdoc/require-jsdoc
-    protected readonly LOGO_FOOTER_URL: string = 'https://via.placeholder.com/500x60';
+    protected override readonly LOGO_FOOTER_URL: string = 'https://via.placeholder.com/500x60';
     // eslint-disable-next-line jsdoc/require-jsdoc
     protected readonly ADDRESS_LINES: string[] = ['my address', 'my name'];
 }

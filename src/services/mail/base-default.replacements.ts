@@ -46,7 +46,7 @@ export interface BaseDefaultStaticReplacements {
     /**
      * The url of the logo to display at the top of the email.
      */
-    logoHeaderUrl: string,
+    logoHeaderUrl?: string,
     /**
      * The width of the logo inside the header of the email.
      */
@@ -54,7 +54,7 @@ export interface BaseDefaultStaticReplacements {
     /**
      * The url of the logo to display at the bottom of the email.
      */
-    logoFooterUrl: string,
+    logoFooterUrl?: string,
     /**
      * The width of the logo inside the footer.
      */

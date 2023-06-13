@@ -1,9 +1,9 @@
+import { expect } from '@loopback/testlab';
+import { readFileSync } from 'fs';
+import { Transporter } from 'nodemailer';
 import { BaseUser, PasswordResetToken } from '../../models';
 import { BaseMailService } from '../../services';
-import { Transporter } from 'nodemailer';
 import { DefaultEntityOmitKeys } from '../../types';
-import { readFileSync } from 'fs';
-import { expect } from '@loopback/testlab';
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 class MailService extends BaseMailService<string> {
@@ -18,9 +18,9 @@ class MailService extends BaseMailService<string> {
     // eslint-disable-next-line jsdoc/require-jsdoc
     protected readonly SAVED_EMAILS_PATH: string = './test-emails';
     // eslint-disable-next-line jsdoc/require-jsdoc
-    protected readonly LOGO_HEADER_URL: string = 'https://via.placeholder.com/165x165';
+    protected override readonly LOGO_HEADER_URL: string = 'https://via.placeholder.com/165x165';
     // eslint-disable-next-line jsdoc/require-jsdoc
-    protected readonly LOGO_FOOTER_URL: string = 'https://via.placeholder.com/500x60';
+    protected override readonly LOGO_FOOTER_URL?: string = 'https://via.placeholder.com/500x60';
     // eslint-disable-next-line jsdoc/require-jsdoc
     protected readonly ADDRESS_LINES: string[] = ['my address', 'my name'];
 }

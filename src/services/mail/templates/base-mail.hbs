@@ -58,11 +58,13 @@
                             margin-top: 20px;
                             margin-bottom: 20px;
                         ">
+                            {{#if logoHeaderUrl}}
                             <tr>
                                 <td style="text-align: center; padding: 30px;">
                                     <img src="{{logoHeaderUrl}}" width="{{logoHeaderWidth}}" style="width: {{logoHeaderWidth}}px; max-width: 80%; height: auto;" alt="Logo">
                                 </td>
                             </tr>
+                            {{/if}}
                             <tr>
                                 <td style="padding-left: 30px; padding-right: 30px;">
                                     <h1 style="margin-top: 0px; color: {{headlineTextColor}}; text-align: center;">{{headline}}</h1>
@@ -96,11 +98,13 @@
                             color: {{textColor}};
                             margin-bottom: 20px;
                         ">
-                            <tr>
+                            {{#if logoFooterUrl}}
+                                <tr>
                                 <td style="text-align: center; padding-left: 30px; padding-right: 30px;">
                                     <img src="{{logoFooterUrl}}" width="{{logoFooterWidth}}" style="width: {{logoFooterWidth}}px; max-width: 80%; height: auto;" alt="Logo">
                                 </td>
                             </tr>
+                            {{/if}}
                             {{#each addressLines}}
                             <tr>
                                 <td style="padding-left: 30px; padding-right: 30px; text-align: center;">

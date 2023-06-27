@@ -1,12 +1,15 @@
+import { authenticate } from '@loopback/authentication';
 import { inject } from '@loopback/core';
 import { IsolationLevel, juggler } from '@loopback/repository';
-import { getModelSchemaRef, HttpErrors, post, requestBody } from '@loopback/rest';
+import { HttpErrors, Request, RestBindings, getModelSchemaRef, post, requestBody } from '@loopback/rest';
+import { SecurityBindings } from '@loopback/security';
 import { BcryptUtilities } from '../../encapsulation/bcrypt.utilities';
 import { EncodedJwt, JwtUtilities } from '../../encapsulation/jwt.utilities';
 import { LbxJwtBindings } from '../../keys';
 import { BaseUser, BaseUserProfile, BaseUserWithRelations, Credentials, PasswordResetTokenWithRelations } from '../../models';
 import { BaseUserRepository, CredentialsRepository, PasswordResetTokenRepository, RefreshTokenRepository } from '../../repositories';
 import { AccessTokenService, BaseUserService, RefreshTokenService } from '../../services';
+import { TwoFactorService } from '../../services/two-factor.service';
 import { DefaultEntityOmitKeys, TokenObject } from '../../types';
 import { AuthData } from './auth-data.model';
 import { ConfirmResetPassword } from './confirm-reset-password.model';
@@ -41,13 +44,18 @@ export class LbxJwtAuthController<RoleType extends string> {
         @inject(LbxJwtBindings.REFRESH_TOKEN_EXPIRES_IN_MS)
         private readonly refreshTokenExpiresInMs: number,
         @inject(LbxJwtBindings.REFRESH_TOKEN_REPOSITORY)
-        private readonly refreshTokenRepository: RefreshTokenRepository
+        private readonly refreshTokenRepository: RefreshTokenRepository,
+        @inject(LbxJwtBindings.TWO_FACTOR_SERVICE)
+        private readonly twoFactorService: TwoFactorService<RoleType>,
+        @inject(LbxJwtBindings.TWO_FACTOR_HEADER)
+        protected readonly twoFactorHeader: string
     ) {}
 
     /**
      * Tries to login a user with the provided email and password.
      *
      * @param loginCredentials - Contains the email and password of a user.
+     * @param request - The injected request object. Is needed to access the two factor code inside a custom header.
      * @returns Auth Data for the user including the jwt.
      */
     @post(
@@ -74,9 +82,19 @@ export class LbxJwtAuthController<RoleType extends string> {
                 }
             }
         })
-        loginCredentials: LoginCredentials
-    ): Promise<Omit<AuthData<RoleType>, DefaultEntityOmitKeys>> {
+        loginCredentials: LoginCredentials,
+        @inject(RestBindings.Http.REQUEST)
+        request: Request
+    ): Promise<Omit<AuthData<RoleType>, DefaultEntityOmitKeys> | { require2fa: boolean }> {
         const user: BaseUser<RoleType> = await this.baseUserService.verifyCredentials(loginCredentials);
+        if (user.twoFactorEnabled == true) {
+            if (!request.rawHeaders.find(h => h === this.twoFactorHeader)) {
+                return {
+                    require2fa: true
+                };
+            }
+            await this.twoFactorService.validateCode(user.id, this.twoFactorService.extractCodeFromRequest(request));
+        }
         const userProfile: BaseUserProfile<RoleType> = this.baseUserService.convertToUserProfile(user);
         const accessToken: string = await this.accessTokenService.generateToken(userProfile);
         const refreshTokenObject: TokenObject = await this.refreshTokenService.generateToken(userProfile, accessToken);
@@ -289,6 +307,105 @@ export class LbxJwtAuthController<RoleType extends string> {
             await transaction.rollback();
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
             throw new HttpErrors.InternalServerError(`Error trying to set a new password: ${error.message}`);
+        }
+    }
+
+    /**
+     * Generates a two factor secret for the requesting user and returns a qr code url to display.
+     *
+     * @param userProfile - The currently logged in user.
+     * @returns A qr code url for the user.
+     */
+    @authenticate('jwt')
+    @post(
+        '/2fa/turn-on',
+        {
+            responses: {
+                '200': {
+                    description: 'Success'
+                }
+            }
+        }
+    )
+    async turnOn2FA(
+        @inject(SecurityBindings.USER)
+        userProfile: BaseUserProfile<string>
+    ): Promise<{url: string}> {
+        const transaction: juggler.Transaction = await this.dataSource.beginTransaction(IsolationLevel.READ_COMMITTED);
+        try {
+            const qrCodeUrl: string = await this.twoFactorService.turnOn2FA(userProfile.id, { transaction: transaction });
+            await transaction.commit();
+            return { url: qrCodeUrl };
+        }
+        catch (error) {
+            await transaction.rollback();
+            throw error;
+        }
+    }
+
+    /**
+     * Confirms turning on the two factor authentication by checking the provided code.
+     *
+     * @param userProfile - The currently logged in user.
+     * @param request - The injected request object. Is needed to access the two factor code inside a custom header.
+     */
+    @authenticate('jwt')
+    @post(
+        '/2fa/confirm-turn-on',
+        {
+            responses: {
+                '200': {
+                    description: 'Success'
+                }
+            }
+        }
+    )
+    async confirmTurnOn2FA(
+        @inject(SecurityBindings.USER)
+        userProfile: BaseUserProfile<string>,
+        @inject(RestBindings.Http.REQUEST)
+        request: Request
+    ): Promise<void> {
+        const transaction: juggler.Transaction = await this.dataSource.beginTransaction(IsolationLevel.READ_COMMITTED);
+        try {
+            const code: string = this.twoFactorService.extractCodeFromRequest(request);
+            await this.twoFactorService.confirmTurnOn2FA(userProfile.id, code, { transaction: transaction });
+            await transaction.commit();
+        }
+        catch (error) {
+            await transaction.rollback();
+            throw error;
+        }
+    }
+
+    /**
+     * Turns off two factor authentication for the current user.
+     *
+     * @param userProfile - The currently logged in user.
+     */
+    @authenticate('jwt')
+    @post(
+        '/2fa/turn-off',
+        {
+            responses: {
+                '200': {
+                    description: 'Success'
+                }
+            }
+        }
+    )
+    async turnOff2FA(
+        @inject(SecurityBindings.USER)
+        userProfile: BaseUserProfile<string>
+    ): Promise<void> {
+        const transaction: juggler.Transaction = await this.dataSource.beginTransaction(IsolationLevel.READ_COMMITTED);
+        try {
+            await this.twoFactorService.turnOff2FA(userProfile.id, { transaction: transaction });
+            await transaction.commit();
+        }
+        catch (error) {
+            await transaction.rollback();
+            throw error;
         }
     }
 }

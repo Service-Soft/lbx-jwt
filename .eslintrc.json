@@ -4,25 +4,6 @@
     "overrides": [
         {
             "files": [
-                "*.ts"
-            ],
-            "parserOptions": {
-                "project": [
-                    "tsconfig.json"
-                ],
-                "createDefaultProgram": true
-            },
-            "rules": {
-                "@cspell/spellchecker": [
-                    "warn",
-                    {
-                        "customWordListFile": "./cspell.words.txt"
-                    }
-                ]
-            }
-        },
-        {
-            "files": [
                 "*.repository.ts"
             ],
             "parserOptions": {

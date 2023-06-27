@@ -1,12 +1,12 @@
 import { registerAuthenticationStrategy } from '@loopback/authentication';
 import { Application, Binding, Component, CoreBindings, createBindingFromClass, inject } from '@loopback/core';
 import { LbxJwtBindings, LbxJwtDefaultValues } from './keys';
-import { RefreshTokenRepository, CredentialsRepository, BaseUserRepository } from './repositories';
-import { BaseUserService, RefreshTokenService } from './services';
-import { JwtAuthenticationStrategy } from './services/jwt.auth.strategy';
-import { AccessTokenService } from './services/access-token.service';
-import { SecuritySpecEnhancer } from './services/security.spec.enhancer';
+import { BaseUserRepository, CredentialsRepository, RefreshTokenRepository } from './repositories';
 import { PasswordResetTokenRepository } from './repositories/password-reset-token.repository';
+import { BaseUserService, RefreshTokenService, TwoFactorService } from './services';
+import { AccessTokenService } from './services/access-token.service';
+import { JwtAuthenticationStrategy } from './services/jwt.auth.strategy';
+import { SecuritySpecEnhancer } from './services/security.spec.enhancer';
 
 /**
  * Provides out of the box jwt functionality.
@@ -33,6 +33,12 @@ export class LbxJwtComponent implements Component {
         // password reset token bindings
         Binding.bind(LbxJwtBindings.PASSWORD_RESET_TOKEN_EXPIRES_IN_MS).to(LbxJwtDefaultValues.PASSWORD_RESET_TOKEN_EXPIRES_IN_MS),
         Binding.bind(LbxJwtBindings.PASSWORD_RESET_TOKEN_REPOSITORY).toClass(PasswordResetTokenRepository),
+
+        // two factor authentication
+        Binding.bind(LbxJwtBindings.FORCE_TWO_FACTOR).to(false),
+        Binding.bind(LbxJwtBindings.FORCE_TWO_FACTOR_ALLOWED_ROUTES).to(['login']),
+        Binding.bind(LbxJwtBindings.TWO_FACTOR_HEADER).to('X-Authorization-2FA'),
+        Binding.bind(LbxJwtBindings.TWO_FACTOR_SERVICE).toClass(TwoFactorService),
 
         // OpenApi
         createBindingFromClass(SecuritySpecEnhancer)

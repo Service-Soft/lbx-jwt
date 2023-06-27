@@ -32,6 +32,25 @@ export class Credentials extends Entity {
     password: string;
 
     /**
+     * The two factor authentication secret.
+     * Unique for each user and is needed to validate two factor codes.
+     */
+    @property({
+        type: 'string',
+        required: false
+    })
+    twoFactorSecret?: string;
+
+    /**
+     * The two factor url that is needed to display a qr code.
+     */
+    @property({
+        type: 'string',
+        required: false
+    })
+    twoFactorAuthUrl?: string;
+
+    /**
      * The user that this credentials belong to.
      */
     @property({

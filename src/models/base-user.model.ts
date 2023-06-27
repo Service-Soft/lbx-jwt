@@ -47,6 +47,15 @@ export class BaseUser<RoleType extends string> extends Entity {
     roles: RoleType[];
 
     /**
+     * Whether or not this user account has two factor authentication enabled.
+     */
+    @property({
+        type: 'boolean',
+        required: false
+    })
+    twoFactorEnabled?: boolean;
+
+    /**
      * The credentials of the user.
      * Contains the hashed password.
      */

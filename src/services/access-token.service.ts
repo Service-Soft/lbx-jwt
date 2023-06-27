@@ -25,7 +25,7 @@ export class AccessTokenService<RoleType extends string> implements TokenService
             const decodedToken: EncodedJwt<RoleType> = await JwtUtilities.verifyAsync(token, this.accessTokenSecret);
             // don't copy over  token field 'iat' and 'exp', nor 'email' to user profile
             const userProfile: Omit<BaseUserProfile<RoleType>, 'email'> = Object.assign(
-                { [securityId]: '', name: '' },
+                { [securityId]: decodedToken.payload.id, name: '' },
                 {
                     id: decodedToken.payload.id,
                     roles: decodedToken.payload.roles

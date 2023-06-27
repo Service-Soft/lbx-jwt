@@ -1,5 +1,3 @@
-// Uncomment these imports to begin using these cool features!
-
 import { authenticate } from '@loopback/authentication';
 import { authorize } from '@loopback/authorization';
 import { inject } from '@loopback/core';
@@ -8,9 +6,6 @@ import { get, HttpErrors } from '@loopback/rest';
 import { SecurityBindings } from '@loopback/security';
 import { BaseUser, BaseUserProfile, BaseUserRepository, roleAuthorization } from 'lbx-jwt';
 import { Roles } from '../models/roles.enum';
-
-// import {inject} from '@loopback/core';
-
 
 /**
  * Controller that provides some endpoints to test authentication and authorization.
@@ -21,7 +16,6 @@ export class TestController {
         private readonly userRepository: BaseUserRepository<Roles>
     ) {}
 
-    // eslint-disable-next-line jsdoc/require-jsdoc
     @authenticate('jwt')
     @get('me')
     async getCurrentUser(
@@ -35,7 +29,6 @@ export class TestController {
         return foundUser;
     }
 
-    // eslint-disable-next-line jsdoc/require-jsdoc
     @authenticate('jwt')
     @authorize({ voters: [roleAuthorization], allowedRoles: [Roles.USER] })
     @get('user-data')
@@ -43,7 +36,6 @@ export class TestController {
         return 'secret user data';
     }
 
-    // eslint-disable-next-line jsdoc/require-jsdoc
     @authenticate('jwt')
     @authorize({ voters: [roleAuthorization], allowedRoles: [Roles.ADMIN] })
     @get('admin-data')

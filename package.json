@@ -1,7 +1,7 @@
 {
     "name": "lbx-jwt",
     "description": "Provides JWT authentication for loopback applications. Includes storing roles inside tokens and handling refreshing. Built-in reuse detection.",
-    "version": "1.0.7",
+    "version": "1.0.8",
     "keywords": [
         "lb4",
         "LoopBack",
@@ -32,7 +32,7 @@
         "test": "lb-mocha --allow-console-logs \"dist/__tests__\"",
         "posttest": "npm run lint",
         "test:dev": "lb-mocha --allow-console-logs dist/__tests__/**/*.js && npm run posttest",
-        "start": "node -r source-map-support/register showcase",
+        "start": "cd showcase && npm run start",
         "clean": "lb-clean dist *.tsbuildinfo .eslintcache",
         "rebuild": "npm run clean && npm run build",
         "copy:readme": "cp ./README.md dist/README.md",
@@ -51,7 +51,9 @@
     },
     "dependencies": {
         "bcryptjs": "^2.4.3",
+        "hi-base32": "^0.5.1",
         "jsonwebtoken": "^9.0.0",
+        "otpauth": "^9.1.2",
         "tslib": "^2.5.0"
     },
     "devDependencies": {
@@ -70,7 +72,7 @@
         "@types/node": "^18.15.10",
         "@types/nodemailer": "^6.4.7",
         "eslint": "^8.36.0",
-        "eslint-config-service-soft": "^1.0.9",
+        "eslint-config-service-soft": "^1.1.0",
         "handlebars": "^4.7.7",
         "nodemailer": "^6.9.1",
         "typescript": "~5.0.2"

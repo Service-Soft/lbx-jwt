@@ -1,6 +1,7 @@
 import { BindingKey } from '@loopback/core';
 import { AccessTokenService, BaseUserService, RefreshTokenService } from './services';
 import { BaseMailService } from './services/mail/base-mail.service';
+import { TwoFactorService } from './services/two-factor.service';
 
 const ONE_HUNDRED_DAYS_IN_MS: number = 8640000000;
 const HOUR_IN_MS: number = 3600000;
@@ -127,4 +128,29 @@ export namespace LbxJwtBindings {
     export const MAIL_SERVICE: BindingKey<BaseMailService<string>> = BindingKey.create<BaseMailService<string>>('lbx.jwt.email.service');
 
     export const ROLES: BindingKey<string[]> = BindingKey.create<string[]>('lbx.jwt.roles');
+
+    /**
+     * The label to display inside the two factor app.
+     */
+    export const TWO_FACTOR_LABEL: BindingKey<string> = BindingKey.create('lbx.jwt.two.factor.label');
+    /**
+     * Whether or not two factor authentication should be forced. If set to true a user is only allowed to login,
+     * any other request leads to an error if two factor authentication is disabled.
+     */
+    export const FORCE_TWO_FACTOR: BindingKey<boolean> = BindingKey.create('lbx.jwt.two.factor.force');
+    /**
+     * Routes that should be accessible even if two factor authentication is disabled for the user.
+     * By default this is the login route.
+     */
+    export const FORCE_TWO_FACTOR_ALLOWED_ROUTES: BindingKey<string[]> = BindingKey.create('lbx.jwt.two.factor.force.allowed.routes');
+    /**
+     * The custom header for request where the two factor code is provided.
+     * Defaults to 'X-Authorization-2FA'.
+     */
+    export const TWO_FACTOR_HEADER: BindingKey<string> = BindingKey.create('lbx.jwt.two.factor.header');
+    /**
+     * Provider for the two factor service.
+     */
+    // eslint-disable-next-line max-len
+    export const TWO_FACTOR_SERVICE: BindingKey<TwoFactorService<string>> = BindingKey.create<TwoFactorService<string>>('lbx.jwt.two.factor.service');
 }

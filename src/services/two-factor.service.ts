@@ -5,7 +5,7 @@ import crypto from 'crypto';
 import { encode } from 'hi-base32';
 import { TOTP } from 'otpauth';
 import { LbxJwtBindings } from '../keys';
-import { Credentials } from '../models';
+import { BaseUser, Credentials } from '../models';
 import { BaseUserRepository } from '../repositories';
 
 /**
@@ -32,6 +32,11 @@ export class TwoFactorService<RoleType extends string> {
      * @returns The qr code url.
      */
     async turnOn2FA(userId: string, options?: Options): Promise<string> {
+        const user: BaseUser<string> = await this.baseUserRepository.findById(userId);
+        if (user.twoFactorEnabled === true) {
+            throw new HttpErrors.BadRequest('The requesting user has already configured two factor authentication.');
+        }
+
         const secret: string = this.generateSecret();
         const totp: TOTP = new TOTP({ label: this.twoFactorLabel, secret: secret });
 

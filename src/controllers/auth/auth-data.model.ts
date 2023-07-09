@@ -61,6 +61,14 @@ export class AuthData<RoleType extends string> extends Model {
     })
     roles: RoleType[];
     /**
+     * Whether or not two factor authentication is enabled.
+     */
+    @property({
+        type: 'boolean',
+        required: true
+    })
+    twoFactorEnabled: boolean;
+    /**
      * The id of the currently logged in user.
      */
     @property({

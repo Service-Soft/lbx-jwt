@@ -108,6 +108,7 @@ export class LbxJwtAuthController<RoleType extends string> {
                 expirationDate: new Date(Date.now() + this.refreshTokenExpiresInMs)
             },
             roles: user.roles,
+            twoFactorEnabled: user.twoFactorEnabled ?? false,
             userId: user.id
         };
     }
@@ -146,6 +147,7 @@ export class LbxJwtAuthController<RoleType extends string> {
     ): Promise<Omit<AuthData<RoleType>, DefaultEntityOmitKeys>> {
         const refreshTokenObject: TokenObject = await this.refreshTokenService.refreshToken(refreshGrant.refreshToken);
         const encodedJwt: EncodedJwt<RoleType> = await JwtUtilities.verifyAsync(refreshTokenObject.accessToken, this.accessTokenSecret);
+        const user: BaseUser<string> = await this.baseUserRepository.findById(encodedJwt.payload.id);
         return {
             accessToken: {
                 value: refreshTokenObject.accessToken,
@@ -156,6 +158,7 @@ export class LbxJwtAuthController<RoleType extends string> {
                 expirationDate: new Date(Date.now() + this.refreshTokenExpiresInMs)
             },
             roles: encodedJwt.payload.roles,
+            twoFactorEnabled: user.twoFactorEnabled ?? false,
             userId: encodedJwt.payload.id
         };
     }

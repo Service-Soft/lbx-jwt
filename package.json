@@ -1,7 +1,7 @@
 {
     "name": "lbx-jwt",
     "description": "Provides JWT authentication for loopback applications. Includes storing roles inside tokens and handling refreshing. Built-in reuse detection.",
-    "version": "1.0.8",
+    "version": "1.0.9",
     "keywords": [
         "lb4",
         "LoopBack",
@@ -24,7 +24,8 @@
     "main": "dist/index.js",
     "author": "Tim Fabian",
     "scripts": {
-        "build": "lb-tsc && npm run copy:readme && npm run copy:license && npm run copy:contributing && npm run copy:mailTemplates",
+        "build": "lb-tsc && npm run copy:mailTemplates",
+        "build:prod": "lb-tsc && npm run copy:readme && npm run copy:license && npm run copy:contributing && npm run copy:mailTemplates",
         "build:watch": "npm run build --watch",
         "lint": "eslint --report-unused-disable-directives . --max-warnings 0",
         "lint:fix": "eslint --report-unused-disable-directives . --fix",

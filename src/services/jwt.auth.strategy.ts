@@ -33,18 +33,22 @@ export class JwtAuthenticationStrategy implements AuthenticationStrategy {
     async authenticate(request: Request): Promise<BaseUserProfile<string> | undefined> {
         const token: string = this.extractTokenFromRequest(request);
         const userProfile: BaseUserProfile<string> = await this.accessTokenService.verifyToken(token) as BaseUserProfile<string>;
-        await this.validate2FA(request, userProfile);
+        const user: BaseUser<string> = await this.baseUserRepository.findById(userProfile.id);
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        if (user.requiresPasswordChange) {
+            throw new HttpErrors.BadRequest('This account needs to change his password before it can access this route.');
+        }
+        await this.validate2FA(user, request);
         return userProfile;
     }
 
     /**
      * Checks if the request requires 2fa and validates accordingly.
      *
+     * @param user - The currently logged in user.
      * @param request - The request, is used to extract the two factor code from the custom header.
-     * @param userProfile - The currently logged in user.
      */
-    protected async validate2FA(request: Request, userProfile: BaseUserProfile<string>): Promise<void> {
-        const user: BaseUser<string> = await this.baseUserRepository.findById(userProfile.id);
+    protected async validate2FA(user: BaseUser<string>, request: Request): Promise<void> {
         if (
             this.forceTwoFactor && user.twoFactorEnabled != true
             && !this.forceTwoFactorAllowedRoutes.find(r => request.url === r || new URL(request.url).pathname === r)

@@ -56,6 +56,15 @@ export class BaseUser<RoleType extends string> extends Entity {
     twoFactorEnabled?: boolean;
 
     /**
+     * Whether or not this user needs to change his password.
+     */
+    @property({
+        type: 'boolean',
+        required: false
+    })
+    requiresPasswordChange?: boolean;
+
+    /**
      * The credentials of the user.
      * Contains the hashed password.
      */

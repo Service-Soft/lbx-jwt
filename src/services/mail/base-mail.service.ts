@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { Transporter } from 'nodemailer';
 import path from 'path';
 import { HandlebarsUtilities } from '../../encapsulation/handlebars.utilities';
@@ -228,6 +228,9 @@ export abstract class BaseMailService<
         if (this.PRODUCTION) {
             await this.webserverMailTransporter.sendMail(email);
             return;
+        }
+        if (!existsSync(this.SAVED_EMAILS_PATH)) {
+            mkdirSync(this.SAVED_EMAILS_PATH);
         }
         // for testing emails
         writeFileSync(`${this.SAVED_EMAILS_PATH}/${email.subject.replace(/ /g, '')}.test.html`, email.html);

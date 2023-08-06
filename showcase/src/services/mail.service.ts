@@ -1,4 +1,4 @@
-import { injectable, /* inject, */ BindingScope } from '@loopback/core';
+import { BindingScope, injectable } from '@loopback/core';
 import { BaseMailService } from 'lbx-jwt';
 import { Transporter } from 'nodemailer';
 import path from 'path';
@@ -12,7 +12,7 @@ export class MailService extends BaseMailService<Roles> {
     // eslint-disable-next-line jsdoc/require-jsdoc
     protected readonly WEBSERVER_MAIL: string = 'webserver@test.com';
     // eslint-disable-next-line jsdoc/require-jsdoc
-    protected readonly BASE_RESET_PASSWORD_LINK: string = 'http://localhost:4200/reset-password';
+    protected readonly BASE_RESET_PASSWORD_LINK: string = 'http://localhost:4200/confirm-reset-password';
     // eslint-disable-next-line jsdoc/require-jsdoc
     protected readonly webserverMailTransporter: Transporter;
     // eslint-disable-next-line jsdoc/require-jsdoc

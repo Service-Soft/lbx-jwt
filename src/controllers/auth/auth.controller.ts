@@ -1,6 +1,6 @@
 import { authenticate } from '@loopback/authentication';
 import { inject } from '@loopback/core';
-import { IsolationLevel, juggler } from '@loopback/repository';
+import { IsolationLevel, juggler, model, property } from '@loopback/repository';
 import { HttpErrors, Request, RestBindings, getModelSchemaRef, post, requestBody } from '@loopback/rest';
 import { SecurityBindings } from '@loopback/security';
 import { BcryptUtilities } from '../../encapsulation/bcrypt.utilities';
@@ -16,7 +16,19 @@ import { ConfirmResetPassword } from './confirm-reset-password.model';
 import { LoginCredentials } from './login-credentials.model';
 import { RefreshGrant } from './refresh-grant.model';
 import { RequestResetPasswordGrant } from './request-reset-password-grant.model';
+import { Require2FAResponseModel } from './require-2fa-response.model';
+import { RequirePasswordChangeResponseModel } from './require-password-change.model';
 import { ResetPasswordTokenGrant } from './reset-password-token-grant.model';
+import { TurnOn2FAResponse } from './turn-on-2fa-response.model';
+
+@model()
+class VerifyResetTokenResponse {
+    @property({
+        type: 'boolean',
+        required: true
+    })
+    isValid: boolean;
+}
 
 /**
  * Exposes endpoints regarding authentication and authorization (eg. Login or resetting a users password).
@@ -48,7 +60,7 @@ export class LbxJwtAuthController<RoleType extends string> {
         @inject(LbxJwtBindings.TWO_FACTOR_SERVICE)
         private readonly twoFactorService: TwoFactorService<RoleType>,
         @inject(LbxJwtBindings.TWO_FACTOR_HEADER)
-        protected readonly twoFactorHeader: string
+        private readonly twoFactorHeader: string
     ) {}
 
     /**
@@ -63,10 +75,26 @@ export class LbxJwtAuthController<RoleType extends string> {
         {
             responses: {
                 '200': {
+                    description: 'Login was successful, but the user is required to change his password.',
+                    content: {
+                        'application/json': {
+                            schema: getModelSchemaRef(RequirePasswordChangeResponseModel)
+                        }
+                    }
+                },
+                '202': {
                     description: 'Auth Data for the user including the access and refresh token',
                     content: {
                         'application/json': {
                             schema: getModelSchemaRef(AuthData)
+                        }
+                    }
+                },
+                '206': {
+                    description: 'Requires 2 factor code.',
+                    content: {
+                        'application/json': {
+                            schema: getModelSchemaRef(Require2FAResponseModel)
                         }
                     }
                 }
@@ -85,8 +113,13 @@ export class LbxJwtAuthController<RoleType extends string> {
         loginCredentials: LoginCredentials,
         @inject(RestBindings.Http.REQUEST)
         request: Request
-    ): Promise<Omit<AuthData<RoleType>, DefaultEntityOmitKeys> | { require2fa: boolean }> {
+    ): Promise<Omit<AuthData<RoleType>, DefaultEntityOmitKeys> | Require2FAResponseModel | RequirePasswordChangeResponseModel> {
         const user: BaseUser<RoleType> = await this.baseUserService.verifyCredentials(loginCredentials);
+        if (user.requiresPasswordChange == true) {
+            return {
+                requirePasswordChange: true
+            };
+        }
         if (user.twoFactorEnabled == true) {
             if (!request.rawHeaders.find(h => h === this.twoFactorHeader)) {
                 return {
@@ -119,21 +152,18 @@ export class LbxJwtAuthController<RoleType extends string> {
      * @param refreshGrant - The refresh token send by the user.
      * @returns Auth Data for the user including the jwt.
      */
-    @post(
-        'refresh-token',
-        {
-            responses: {
-                '200': {
-                    description: 'Auth Data for the user including the access and refresh token',
-                    content: {
-                        'application/json': {
-                            schema: getModelSchemaRef(AuthData)
-                        }
+    @post('refresh-token', {
+        responses: {
+            '200': {
+                description: 'Auth Data for the user including the access and refresh token',
+                content: {
+                    'application/json': {
+                        schema: getModelSchemaRef(AuthData)
                     }
                 }
             }
         }
-    )
+    })
     async refreshToken(
         @requestBody({
             required: true,
@@ -168,16 +198,13 @@ export class LbxJwtAuthController<RoleType extends string> {
      *
      * @param refreshGrant - The refresh token of the user that should be logged out.
      */
-    @post(
-        'logout',
-        {
-            responses: {
-                '200': {
-                    description: 'Logout successful'
-                }
+    @post('logout', {
+        responses: {
+            '200': {
+                description: 'Logout successful'
             }
         }
-    )
+    })
     async logout(
         @requestBody({
             required: true,
@@ -197,16 +224,13 @@ export class LbxJwtAuthController<RoleType extends string> {
      *
      * @param requestResetPassword - Contains the email of the user for which a password reset should be requested.
      */
-    @post(
-        'request-reset-password',
-        {
-            responses: {
-                '200': {
-                    description: 'ResetPassword Request successful'
-                }
+    @post('request-reset-password', {
+        responses: {
+            '200': {
+                description: 'ResetPassword Request successful'
             }
         }
-    )
+    })
     async requestResetPassword(
         @requestBody({
             required: true,
@@ -226,17 +250,16 @@ export class LbxJwtAuthController<RoleType extends string> {
      * Throws an error if something is wrong with the token, does noting otherwise.
      *
      * @param token - The token that should be verified.
+     * @returns Whether or not the provided token is valid.
      */
-    @post(
-        'verify-password-reset-token',
-        {
-            responses: {
-                '204': {
-                    description: 'ResetToken Verify success'
-                }
+    @post('verify-password-reset-token', {
+        responses: {
+            '204': {
+                description: 'ResetToken Verify success',
+                content: getModelSchemaRef(VerifyResetTokenResponse)
             }
         }
-    )
+    })
     async verifyPasswordResetToken(
         @requestBody({
             content: {
@@ -246,17 +269,24 @@ export class LbxJwtAuthController<RoleType extends string> {
             }
         })
         token: ResetPasswordTokenGrant
-    ): Promise<void> {
+    ): Promise<VerifyResetTokenResponse> {
         const resetToken: PasswordResetTokenWithRelations | null
             = await this.passwordResetTokenRepository.findOne({ where: { value: token.value } });
         if (!resetToken) {
-            throw new HttpErrors.InternalServerError(`No password reset token found for ${token.value}`);
+            return {
+                isValid: false
+            };
         }
         if (new Date(resetToken.expirationDate).getTime() <= Date.now()) {
             await this.passwordResetTokenRepository.deleteById(resetToken.id);
-            throw new HttpErrors.Unauthorized('Link expired');
+            return {
+                isValid: false
+            };
         }
-        await this.baseUserRepository.findById(resetToken.baseUserId);
+        const referencedUser: BaseUser<RoleType> | null = await this.baseUserRepository.findOne({ where: { id: resetToken.baseUserId } });
+        return {
+            isValid: !!referencedUser
+        };
     }
 
     /**
@@ -264,16 +294,13 @@ export class LbxJwtAuthController<RoleType extends string> {
      *
      * @param resetPasswordData - Contains the password reset token and the new password value.
      */
-    @post(
-        'confirm-reset-password',
-        {
-            responses: {
-                '200': {
-                    description: 'ResetPassword success'
-                }
+    @post('confirm-reset-password', {
+        responses: {
+            '200': {
+                description: 'ResetPassword success'
             }
         }
-    )
+    })
     async confirmResetPassword(
         @requestBody({
             content: {
@@ -304,6 +331,7 @@ export class LbxJwtAuthController<RoleType extends string> {
             await this.credentialsRepository.updateById(credentials.id, credentials, { transaction: transaction });
             await this.passwordResetTokenRepository.deleteById(resetToken.id, { transaction: transaction });
             await this.refreshTokenRepository.deleteAll({ baseUserId: resetToken.baseUserId }, { transaction: transaction });
+            await this.baseUserRepository.updateById(user.id, { requiresPasswordChange: false }, { transaction: transaction });
             await transaction.commit();
         }
         catch (error) {
@@ -320,20 +348,21 @@ export class LbxJwtAuthController<RoleType extends string> {
      * @returns A qr code url for the user.
      */
     @authenticate('jwt')
-    @post(
-        '/2fa/turn-on',
-        {
-            responses: {
-                '200': {
-                    description: 'Success'
+    @post('/2fa/turn-on', {
+        responses: {
+            '200': {
+                content: {
+                    'application/json': {
+                        schema: getModelSchemaRef(TurnOn2FAResponse)
+                    }
                 }
             }
         }
-    )
+    })
     async turnOn2FA(
         @inject(SecurityBindings.USER)
         userProfile: BaseUserProfile<string>
-    ): Promise<{url: string}> {
+    ): Promise<TurnOn2FAResponse> {
         const transaction: juggler.Transaction = await this.dataSource.beginTransaction(IsolationLevel.READ_COMMITTED);
         try {
             const qrCodeUrl: string = await this.twoFactorService.turnOn2FA(userProfile.id, { transaction: transaction });
@@ -353,16 +382,13 @@ export class LbxJwtAuthController<RoleType extends string> {
      * @param request - The injected request object. Is needed to access the two factor code inside a custom header.
      */
     @authenticate('jwt')
-    @post(
-        '/2fa/confirm-turn-on',
-        {
-            responses: {
-                '200': {
-                    description: 'Success'
-                }
+    @post('/2fa/confirm-turn-on', {
+        responses: {
+            '200': {
+                description: 'Success'
             }
         }
-    )
+    })
     async confirmTurnOn2FA(
         @inject(SecurityBindings.USER)
         userProfile: BaseUserProfile<string>,
@@ -387,16 +413,13 @@ export class LbxJwtAuthController<RoleType extends string> {
      * @param userProfile - The currently logged in user.
      */
     @authenticate('jwt')
-    @post(
-        '/2fa/turn-off',
-        {
-            responses: {
-                '200': {
-                    description: 'Success'
-                }
+    @post('/2fa/turn-off', {
+        responses: {
+            '200': {
+                description: 'Success'
             }
         }
-    )
+    })
     async turnOff2FA(
         @inject(SecurityBindings.USER)
         userProfile: BaseUserProfile<string>

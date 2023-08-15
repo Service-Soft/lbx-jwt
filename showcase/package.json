@@ -41,23 +41,23 @@
         "!*/__tests__"
     ],
     "dependencies": {
-        "@loopback/authorization": "^0.12.9",
-        "@loopback/boot": "^5.0.9",
-        "@loopback/core": "^4.0.9",
-        "@loopback/repository": "^5.1.4",
-        "@loopback/rest": "^12.0.9",
-        "@loopback/rest-explorer": "^5.0.9",
-        "@loopback/service-proxy": "^5.0.9",
+        "@loopback/authorization": "^0.14.1",
+        "@loopback/boot": "^6.1.1",
+        "@loopback/core": "^5.1.1",
+        "@loopback/repository": "^6.1.1",
+        "@loopback/rest": "^13.1.1",
+        "@loopback/rest-explorer": "^6.1.1",
+        "@loopback/service-proxy": "^6.1.1",
         "lbx-jwt": "file:..",
-        "loopback-connector-mysql": "^6.2.0",
-        "tslib": "^2.5.0"
+        "loopback-connector-mysql": "^5.4.4",
+        "tslib": "^2.0.0"
     },
     "devDependencies": {
-        "@loopback/build": "^9.0.9",
-        "@loopback/testlab": "^5.0.9",
-        "@types/node": "^18.15.10",
+        "@loopback/build": "^10.1.1",
+        "@loopback/testlab": "^6.1.1",
+        "@types/node": "^16.18.38",
         "source-map-support": "^0.5.21",
         "tsc-watch": "^6.0.4",
-        "typescript": "~5.0.2"
+        "typescript": "~5.1.6"
     }
 }

@@ -1,7 +1,7 @@
 {
     "name": "lbx-jwt",
     "description": "Provides JWT authentication for loopback applications. Includes storing roles inside tokens and handling refreshing. Built-in reuse detection.",
-    "version": "1.0.9",
+    "version": "1.2.0",
     "keywords": [
         "lb4",
         "LoopBack",
@@ -42,40 +42,40 @@
         "copy:mailTemplates": "cp -r ./src/services/mail/templates dist/services/mail/templates"
     },
     "peerDependencies": {
-        "@loopback/authentication": "^9.0.3",
-        "@loopback/authorization": "^0.12",
-        "@loopback/core": "^4",
-        "@loopback/rest": "^12",
-        "@loopback/security": "^0.8",
-        "handlebars": "^4",
-        "nodemailer": "^6"
+        "@loopback/authentication": "10",
+        "@loopback/authorization": "0.14",
+        "@loopback/core": "5",
+        "@loopback/rest": "13",
+        "@loopback/security": "0.10",
+        "handlebars": "4",
+        "nodemailer": "6"
     },
     "dependencies": {
         "bcryptjs": "^2.4.3",
         "hi-base32": "^0.5.1",
-        "jsonwebtoken": "^9.0.0",
-        "otpauth": "^9.1.2",
-        "tslib": "^2.5.0"
+        "jsonwebtoken": "^9.0.1",
+        "otpauth": "^9.1.4",
+        "tslib": "^2.6.1"
     },
     "devDependencies": {
-        "@loopback/authentication": "^9.0.9",
-        "@loopback/boot": "^5.0.9",
-        "@loopback/build": "^9.0.9",
-        "@loopback/core": "^4.0.9",
-        "@loopback/repository": "^5.1.4",
-        "@loopback/rest": "^12.0.9",
-        "@loopback/rest-explorer": "^5.0.9",
-        "@loopback/security": "^0.8.9",
-        "@loopback/service-proxy": "^5.0.9",
-        "@loopback/testlab": "^5.0.9",
+        "@loopback/authentication": "^10.1.1",
+        "@loopback/boot": "^6.1.1",
+        "@loopback/build": "^10.1.1",
+        "@loopback/core": "^5.1.1",
+        "@loopback/repository": "^6.1.1",
+        "@loopback/rest": "^13.1.1",
+        "@loopback/rest-explorer": "^6.1.1",
+        "@loopback/security": "^0.10.1",
+        "@loopback/service-proxy": "^6.1.1",
+        "@loopback/testlab": "^6.1.1",
         "@types/bcryptjs": "2.4.2",
-        "@types/jsonwebtoken": "^9.0.1",
-        "@types/node": "^18.15.10",
-        "@types/nodemailer": "^6.4.7",
-        "eslint": "^8.36.0",
+        "@types/jsonwebtoken": "^9.0.2",
+        "@types/node": "^20.5.0",
+        "@types/nodemailer": "^6.4.9",
+        "eslint": "^8.47.0",
         "eslint-config-service-soft": "^1.1.0",
-        "handlebars": "^4.7.7",
-        "nodemailer": "^6.9.1",
-        "typescript": "~5.0.2"
+        "handlebars": "^4.7.8",
+        "nodemailer": "^6.9.4",
+        "typescript": "~5.1.6"
     }
 }

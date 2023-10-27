@@ -25,7 +25,6 @@ export interface EncodedJwt<RoleType extends string> {
 export abstract class JwtUtilities {
     /**
      * Asynchronously sign the given payload into a JSON Web Token string payload.
-     *
      * @param payload - Any info that should be put inside the token.
      * @param secret - The secret used to encrypt the token.
      * @param options - Additional options like "expiresIn".
@@ -48,7 +47,6 @@ export abstract class JwtUtilities {
 
     /**
      * Asynchronously verify given token using a secret or a public key to get a decoded token.
-     *
      * @param token - The token to encode.
      * @param secret - The secret to encode the token with.
      * @returns The encoded token.

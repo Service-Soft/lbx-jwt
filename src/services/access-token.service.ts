@@ -34,7 +34,7 @@ export class AccessTokenService<RoleType extends string> implements TokenService
             return userProfile as BaseUserProfile<RoleType>;
         }
         catch (error) {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            // eslint-disable-next-line typescript/no-unsafe-member-access
             throw new HttpErrors.Unauthorized(`Error verifying token: ${error.message}`);
         }
     }
@@ -56,7 +56,7 @@ export class AccessTokenService<RoleType extends string> implements TokenService
             );
         }
         catch (error) {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            // eslint-disable-next-line typescript/no-unsafe-member-access
             throw new HttpErrors.Unauthorized(`Error generating token: ${error.message}`);
         }
     }

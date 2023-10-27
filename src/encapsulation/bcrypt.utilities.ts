@@ -6,7 +6,6 @@ import { compare, genSalt, hash } from 'bcryptjs';
 export abstract class BcryptUtilities {
     /**
      * Asynchronously compares the given data against the given hash.
-     *
      * @param s - Data to compare.
      * @param hash - Data to be compared to.
      * @returns Promise, if callback has been omitted.
@@ -17,7 +16,6 @@ export abstract class BcryptUtilities {
 
     /**
      * Asynchronously generates a hash for the given string.
-     *
      * @param value - The value that should be hashed.
      * @returns A hash of the given value.
      */

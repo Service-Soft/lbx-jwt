@@ -53,7 +53,6 @@ export class RefreshTokenService<RoleType extends string> {
 
     /**
      * Generate a refresh token, bind it with the given user profile, then store them in backend.
-     *
      * @param userProfile - The user profile for which the token should be generated.
      * @param token - The access token of the user.
      * @returns An object containing the access and the refresh token.
@@ -83,33 +82,29 @@ export class RefreshTokenService<RoleType extends string> {
 
     /**
      * Refresh the access token bound with the given refresh token.
-     *
      * @param refreshTokenValue - The refresh token value used to refresh the token.
      * @returns An object containing the new access and the new refresh token.
      */
     async refreshToken(refreshTokenValue: string): Promise<TokenObject> {
+        const refreshToken: RefreshTokenWithRelations = await this.verifyToken(refreshTokenValue);
+        if (refreshToken.blacklisted) {
+            await this.refreshTokenRepository.deleteAll({ familyId: refreshToken.familyId });
+            throw new HttpErrors.Unauthorized('The given refresh token has already been used.');
+        }
+
+        const user: BaseUser<RoleType> = await this.baseUserRepository.findById(refreshToken.baseUserId);
+        const userProfile: BaseUserProfile<RoleType> = this.userService.convertToUserProfile(user);
+
+        const newAccessTokenValue: string = await this.accessTokenService.generateToken(userProfile);
+        if (!this.accessTokenIsExpired(refreshToken)) {
+            return {
+                accessToken: newAccessTokenValue,
+                refreshToken: refreshTokenValue
+            };
+        }
+
         const transaction: juggler.Transaction = await this.dataSource.beginTransaction(IsolationLevel.READ_COMMITTED);
         try {
-            const refreshToken: RefreshTokenWithRelations = await this.verifyToken(refreshTokenValue);
-
-            if (refreshToken.blacklisted) {
-                await this.refreshTokenRepository.deleteAll({ familyId: refreshToken.familyId });
-                throw new HttpErrors.Unauthorized('The given refresh token has already been used.');
-            }
-
-            const user: BaseUser<RoleType> = await this.baseUserRepository.findById(refreshToken.baseUserId);
-            const userProfile: BaseUserProfile<RoleType> = this.userService.convertToUserProfile(user);
-
-            const newAccessTokenValue: string = await this.accessTokenService.generateToken(userProfile);
-
-            if (!this.accessTokenIsExpired(refreshToken)) {
-                await transaction.rollback();
-                return {
-                    accessToken: newAccessTokenValue,
-                    refreshToken: refreshTokenValue
-                };
-            }
-
             const newRefreshTokenPayload: RefreshTokenPayload = {
                 baseUserId: userProfile[securityId],
                 tokenId: generateUniqueId()
@@ -138,7 +133,7 @@ export class RefreshTokenService<RoleType extends string> {
         }
         catch (error) {
             await transaction.rollback();
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            // eslint-disable-next-line typescript/no-unsafe-member-access
             throw new HttpErrors.Unauthorized(`Error verifying token: ${error.message}`);
         }
     }
@@ -152,7 +147,6 @@ export class RefreshTokenService<RoleType extends string> {
     /**
      * Revokes the family of the given token.
      * That means that every refresh token that comes from the same original login gets deleted.
-     *
      * @param refreshTokenValue - The value of the token that should be revoked.
      */
     async revokeTokenFamily(refreshTokenValue: string): Promise<void> {
@@ -171,7 +165,6 @@ export class RefreshTokenService<RoleType extends string> {
 
     /**
      * Verify the validity of a refresh token, and make sure it exists in backend.
-     *
      * @param refreshToken - The refresh token that should be verified.
      * @returns The found refresh token with its relations or an error.
      */
@@ -188,7 +181,7 @@ export class RefreshTokenService<RoleType extends string> {
         }
         catch (error) {
             throw new HttpErrors.Unauthorized(
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                // eslint-disable-next-line typescript/no-unsafe-member-access
                 `Error verifying token: ${error.message}`
             );
         }

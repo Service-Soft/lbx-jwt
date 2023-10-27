@@ -52,7 +52,7 @@ export class RegisterController {
         })
         newUser: Omit<NewUser, DefaultEntityOmitKeys | 'id'>
     ): Promise<Omit<BaseUser<Roles>, DefaultEntityOmitKeys | 'credentials'>> {
-        // eslint-disable-next-line @typescript-eslint/typedef
+        // eslint-disable-next-line typescript/typedef
         const transaction = await this.dataSource.beginTransaction(IsolationLevel.READ_COMMITTED);
         try {
             const baseUser: Omit<BaseUser<Roles>, DefaultEntityOmitKeys | 'credentials' | 'id'> = {

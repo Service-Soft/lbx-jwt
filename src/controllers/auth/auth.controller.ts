@@ -65,7 +65,6 @@ export class LbxJwtAuthController<RoleType extends string> {
 
     /**
      * Tries to login a user with the provided email and password.
-     *
      * @param loginCredentials - Contains the email and password of a user.
      * @param request - The injected request object. Is needed to access the two factor code inside a custom header.
      * @returns Auth Data for the user including the jwt.
@@ -148,7 +147,6 @@ export class LbxJwtAuthController<RoleType extends string> {
 
     /**
      * Refreshes a token.
-     *
      * @param refreshGrant - The refresh token send by the user.
      * @returns Auth Data for the user including the jwt.
      */
@@ -195,7 +193,6 @@ export class LbxJwtAuthController<RoleType extends string> {
 
     /**
      * Logout a user. Cleans up all existing refresh tokens of the current token family.
-     *
      * @param refreshGrant - The refresh token of the user that should be logged out.
      */
     @post('logout', {
@@ -221,7 +218,6 @@ export class LbxJwtAuthController<RoleType extends string> {
 
     /**
      * Requests the reset of a password.
-     *
      * @param requestResetPassword - Contains the email of the user for which a password reset should be requested.
      */
     @post('request-reset-password', {
@@ -248,7 +244,6 @@ export class LbxJwtAuthController<RoleType extends string> {
     /**
      * Verifies a given reset password token.
      * Throws an error if something is wrong with the token, does noting otherwise.
-     *
      * @param token - The token that should be verified.
      * @returns Whether or not the provided token is valid.
      */
@@ -291,7 +286,6 @@ export class LbxJwtAuthController<RoleType extends string> {
 
     /**
      * Confirms the reset of the password and tries to set it to the given password.
-     *
      * @param resetPasswordData - Contains the password reset token and the new password value.
      */
     @post('confirm-reset-password', {
@@ -336,14 +330,13 @@ export class LbxJwtAuthController<RoleType extends string> {
         }
         catch (error) {
             await transaction.rollback();
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            // eslint-disable-next-line typescript/no-unsafe-member-access
             throw new HttpErrors.InternalServerError(`Error trying to set a new password: ${error.message}`);
         }
     }
 
     /**
      * Generates a two factor secret for the requesting user and returns a qr code url to display.
-     *
      * @param userProfile - The currently logged in user.
      * @returns A qr code url for the user.
      */
@@ -377,7 +370,6 @@ export class LbxJwtAuthController<RoleType extends string> {
 
     /**
      * Confirms turning on the two factor authentication by checking the provided code.
-     *
      * @param userProfile - The currently logged in user.
      * @param request - The injected request object. Is needed to access the two factor code inside a custom header.
      */
@@ -409,7 +401,6 @@ export class LbxJwtAuthController<RoleType extends string> {
 
     /**
      * Turns off two factor authentication for the current user.
-     *
      * @param userProfile - The currently logged in user.
      */
     @authenticate('jwt')

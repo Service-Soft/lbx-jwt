@@ -1,7 +1,7 @@
 {
     "name": "lbx-jwt",
     "description": "Provides JWT authentication for loopback applications. Includes storing roles inside tokens and handling refreshing. Built-in reuse detection.",
-    "version": "1.2.0",
+    "version": "1.2.1",
     "keywords": [
         "lb4",
         "LoopBack",
@@ -73,7 +73,7 @@
         "@types/node": "^20.5.0",
         "@types/nodemailer": "^6.4.9",
         "eslint": "^8.47.0",
-        "eslint-config-service-soft": "^1.1.0",
+        "eslint-config-service-soft": "^1.2.2",
         "handlebars": "^4.7.8",
         "nodemailer": "^6.9.4",
         "typescript": "~5.1.6"

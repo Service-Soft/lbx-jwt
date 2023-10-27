@@ -34,7 +34,7 @@ export class JwtAuthenticationStrategy implements AuthenticationStrategy {
         const token: string = this.extractTokenFromRequest(request);
         const userProfile: BaseUserProfile<string> = await this.accessTokenService.verifyToken(token) as BaseUserProfile<string>;
         const user: BaseUser<string> = await this.baseUserRepository.findById(userProfile.id);
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        // eslint-disable-next-line typescript/strict-boolean-expressions
         if (user.requiresPasswordChange) {
             throw new HttpErrors.BadRequest('This account needs to change his password before it can access this route.');
         }
@@ -44,7 +44,6 @@ export class JwtAuthenticationStrategy implements AuthenticationStrategy {
 
     /**
      * Checks if the request requires 2fa and validates accordingly.
-     *
      * @param user - The currently logged in user.
      * @param request - The request, is used to extract the two factor code from the custom header.
      */
@@ -56,11 +55,11 @@ export class JwtAuthenticationStrategy implements AuthenticationStrategy {
             throw new HttpErrors.BadRequest('This account needs to setup two factor authentication before it can access this route.');
         }
         const metadata: AuthenticationMetadata | undefined = this.metadataArray.find(m => m.strategy === this.name);
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        // eslint-disable-next-line typescript/strict-boolean-expressions
         if (!metadata?.options?.['require2fa']) {
             return;
         }
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        // eslint-disable-next-line typescript/strict-boolean-expressions
         if (!this.forceTwoFactor && !user.twoFactorEnabled) {
             return;
         }
@@ -70,7 +69,6 @@ export class JwtAuthenticationStrategy implements AuthenticationStrategy {
 
     /**
      * Extracts the token from the given request.
-     *
      * @param request - The request to get the token from.
      * @returns The found token. An error otherwise.
      * @throws An Http-Unauthorized-Error when no token could be found.
@@ -93,7 +91,6 @@ export class JwtAuthenticationStrategy implements AuthenticationStrategy {
         const parts: string[] = authHeaderValue.split(' ');
         if (parts.length !== 2) {
             throw new HttpErrors.Unauthorized(
-                // eslint-disable-next-line max-len
                 'Authorization header value has too many parts. It must follow the pattern: \'Bearer xx.yy.zz\' where xx.yy.zz is a valid JWT token.'
             );
         }

@@ -8,29 +8,29 @@ import { AccessTokenService, BaseMailService, BaseUserService, RefreshTokenServi
 import { DefaultEntityOmitKeys, TokenObject } from '../../types';
 import { sleep } from '../fixtures/helpers';
 
-// eslint-disable-next-line jsdoc/require-jsdoc
+
 enum Roles {
     USER = 'user',
     ADMIN = 'admin'
 }
 
-// eslint-disable-next-line jsdoc/require-jsdoc
+
 class MailService extends BaseMailService<Roles> {
-    // eslint-disable-next-line jsdoc/require-jsdoc
+
     protected readonly WEBSERVER_MAIL: string = 'webserver@test.com';
-    // eslint-disable-next-line jsdoc/require-jsdoc
+
     protected readonly BASE_RESET_PASSWORD_LINK: string = 'http://localhost:4200/reset-password';
-    // eslint-disable-next-line jsdoc/require-jsdoc
+
     protected readonly webserverMailTransporter: Transporter;
-    // eslint-disable-next-line jsdoc/require-jsdoc
+
     protected readonly PRODUCTION: boolean = false;
-    // eslint-disable-next-line jsdoc/require-jsdoc
+
     protected readonly SAVED_EMAILS_PATH: string = './test-emails';
-    // eslint-disable-next-line jsdoc/require-jsdoc
+
     protected override readonly LOGO_HEADER_URL: string = 'https://via.placeholder.com/165x165';
-    // eslint-disable-next-line jsdoc/require-jsdoc
+
     protected override readonly LOGO_FOOTER_URL: string = 'https://via.placeholder.com/500x60';
-    // eslint-disable-next-line jsdoc/require-jsdoc
+
     protected readonly ADDRESS_LINES: string[] = ['my address', 'my name'];
 }
 
@@ -45,13 +45,13 @@ const transaction: juggler.Transaction = {
 };
 testDb.stubs.beginTransaction.resolves(transaction);
 
-// eslint-disable-next-line max-len
+
 const baseUserRepository: StubbedInstanceWithSinonAccessor<BaseUserRepository<Roles>> = createStubInstance(BaseUserRepository) as StubbedInstanceWithSinonAccessor<BaseUserRepository<Roles>>;
-// eslint-disable-next-line max-len
+
 const passwordResetTokenRepository: StubbedInstanceWithSinonAccessor<PasswordResetTokenRepository<Roles>> = createStubInstance(PasswordResetTokenRepository);
 const refreshTokenRepository: StubbedInstanceWithSinonAccessor<RefreshTokenRepository> = createStubInstance(RefreshTokenRepository);
 const mailService: MailService = new MailService();
-// eslint-disable-next-line max-len
+
 const userService: BaseUserService<Roles> = new BaseUserService<Roles>(baseUserRepository, passwordResetTokenRepository, 300000, testDb, mailService);
 const accessTokenService: AccessTokenService<Roles> = new AccessTokenService('accessSecret', 3600000);
 

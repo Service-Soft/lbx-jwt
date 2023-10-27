@@ -38,7 +38,6 @@ export class SecuritySpecEnhancer implements OASEnhancer {
 
     /**
      * Modifies the OpenApi specification.
-     *
      * @param spec - The modification done to the OpenApi specification.
      * @returns The modified OpenApi specification.
      */

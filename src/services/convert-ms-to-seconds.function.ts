@@ -1,6 +1,5 @@
 /**
  * Converts the given milliseconds to seconds.
- *
  * @param ms - The milliseconds to convert.
  * @returns The converted seconds.
  */

@@ -26,7 +26,6 @@ export class TwoFactorService<RoleType extends string> {
     /**
      * Generates a secret and a two factor auth url to use for a qr code.
      * Both values gets saved to the user credentials of the user with the given id.
-     *
      * @param userId - The id of the user that wants to activate two factor authentication.
      * @param options - Additional options eg. Transaction.
      * @returns The qr code url.
@@ -47,7 +46,6 @@ export class TwoFactorService<RoleType extends string> {
 
     /**
      * Confirms the setup of two factor authentication for the user with the given id.
-     *
      * @param userId - The id of the user that wants to activate two factor authentication.
      * @param code - The code that is used to confirm that the user has the correct secret setup.
      * @param options - Additional options eg. Transaction.
@@ -59,7 +57,6 @@ export class TwoFactorService<RoleType extends string> {
 
     /**
      * Turns off 2fa for the user with the given id.
-     *
      * @param userId - The id of the user to turn 2fa off for.
      * @param options - Additional options eg. Transaction.
      */
@@ -76,7 +73,6 @@ export class TwoFactorService<RoleType extends string> {
 
     /**
      * Extracts a two factor code from the given request by reading the custom header.
-     *
      * @param request - The request of which the two factor code should be read.
      * @returns The found two factor code.
      * @throws When the custom header wasn't found, is empty or not 6 digits long.
@@ -97,7 +93,6 @@ export class TwoFactorService<RoleType extends string> {
 
     /**
      * Validates the given two factor code for the user with the given id.
-     *
      * @param userId - The id of the user that tries to do something that requires a 2fa code.
      * @param code - The two factor code to validate.
      * @param options - Additional options eg. Transaction.

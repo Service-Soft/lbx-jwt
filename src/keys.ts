@@ -1,3 +1,4 @@
+
 import { BindingKey } from '@loopback/core';
 import { AccessTokenService, BaseUserService, RefreshTokenService } from './services';
 import { BaseMailService } from './services/mail/base-mail.service';
@@ -13,19 +14,16 @@ const FIVE_MINUTES_IN_MS: number = 300000;
 interface DefaultValues {
     /**
      * The amount of milliseconds after which the access token expires.
-     *
      * @default 3600000 // 1 hour
      */
     readonly ACCESS_TOKEN_EXPIRES_IN_MS: number,
     /**
      * The amount of milliseconds after which the refresh token expires.
-     *
      * @default 8640000000 // 100 days
      */
     readonly REFRESH_TOKEN_EXPIRES_IN_MS: number,
     /**
      * The refresh token issuer stored inside the refresh token.
-     *
      * @default 'api'
      */
     readonly REFRESH_TOKEN_ISSUER: string,
@@ -35,6 +33,9 @@ interface DefaultValues {
     readonly PASSWORD_RESET_TOKEN_EXPIRES_IN_MS: number
 }
 
+/**
+ * Default Values for the component.
+ */
 export const LbxJwtDefaultValues: DefaultValues = {
     ACCESS_TOKEN_EXPIRES_IN_MS: HOUR_IN_MS,
     REFRESH_TOKEN_EXPIRES_IN_MS: ONE_HUNDRED_DAYS_IN_MS,
@@ -45,7 +46,7 @@ export const LbxJwtDefaultValues: DefaultValues = {
 /**
  * Bindings to customize the LbxJwt component.
  */
-// eslint-disable-next-line @typescript-eslint/no-namespace
+// eslint-disable-next-line typescript/no-namespace
 export namespace LbxJwtBindings {
     /**
      * The key for the secret used to generate access tokens.
@@ -53,7 +54,6 @@ export namespace LbxJwtBindings {
     export const ACCESS_TOKEN_SECRET: BindingKey<string> = BindingKey.create<string>('lbx.jwt.access.token.secret');
     /**
      * The key for the amount of milliseconds after which the access token expires.
-     *
      * @default 3600000 // 1 hour
      */
     export const ACCESS_TOKEN_EXPIRES_IN_MS: BindingKey<number> = BindingKey.create<number>('lbx.jwt.access.token.expires.in.ms');
@@ -66,7 +66,6 @@ export namespace LbxJwtBindings {
     /**
      * The key for the service that handles verifying user credentials.
      */
-    // eslint-disable-next-line max-len
     export const BASE_USER_SERVICE: BindingKey<BaseUserService<string>> = BindingKey.create<BaseUserService<string>>('lbx.jwt.user.service');
     /**
      * The key of the datasource.
@@ -87,7 +86,6 @@ export namespace LbxJwtBindings {
     export const REFRESH_TOKEN_SECRET: BindingKey<string> = BindingKey.create<string>('lbx.jwt.refresh.token.secret');
     /**
      * The key for the amount of milliseconds after which the refresh token expires.
-     *
      * @default 8640000000 // 100 days
      */
     export const REFRESH_TOKEN_EXPIRES_IN_MS: BindingKey<number> = BindingKey.create<number>('lbx.jwt.refresh.token.expires.in.ms');
@@ -98,7 +96,6 @@ export namespace LbxJwtBindings {
         = BindingKey.create<RefreshTokenService<string>>('lbx.jwt.refresh.token.service');
     /**
      * The key for the refresh token issuer stored inside the refresh token..
-     *
      * @default 'api'
      */
     export const REFRESH_TOKEN_ISSUER: BindingKey<string> = BindingKey.create<string>('lbx.jwt.refresh.token.issuer');
@@ -113,10 +110,8 @@ export namespace LbxJwtBindings {
 
     /**
      * The key for the amount of milliseconds after which the reset password token expires.
-     *
      * @default 300000 // 5 minutes
      */
-    // eslint-disable-next-line max-len
     export const PASSWORD_RESET_TOKEN_EXPIRES_IN_MS: BindingKey<number> = BindingKey.create<number>('lbx.jwt.password.reset.token.expires.in.ms');
     /**
      * The key for the repository that stores the password reset token.
@@ -127,6 +122,9 @@ export namespace LbxJwtBindings {
      */
     export const MAIL_SERVICE: BindingKey<BaseMailService<string>> = BindingKey.create<BaseMailService<string>>('lbx.jwt.email.service');
 
+    /**
+     * Provider for all possible role values.
+     */
     export const ROLES: BindingKey<string[]> = BindingKey.create<string[]>('lbx.jwt.roles');
 
     /**
@@ -151,6 +149,5 @@ export namespace LbxJwtBindings {
     /**
      * Provider for the two factor service.
      */
-    // eslint-disable-next-line max-len
     export const TWO_FACTOR_SERVICE: BindingKey<TwoFactorService<string>> = BindingKey.create<TwoFactorService<string>>('lbx.jwt.two.factor.service');
 }

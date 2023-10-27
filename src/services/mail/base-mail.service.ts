@@ -8,6 +8,9 @@ import { BaseDefaultDynamicReplacements, BaseDefaultStaticReplacements } from '.
 import { Email } from './email.model';
 import { ResetPasswordMailReplacements } from './reset-password-mail.replacements';
 
+/**
+ * The directory for jwt mail templates (eg. For Password reset.).
+ */
 export const LBX_JWT_MAIL_TEMPLATE_DIRECTORY: string = path.join(__dirname, './templates');
 
 /**
@@ -81,35 +84,30 @@ export abstract class BaseMailService<
 
     /**
      * A css color value for the background of emails.
-     *
      * @default 'whitesmoke'
      */
     protected readonly BACKGROUND_COLOR: string = 'whitesmoke';
 
     /**
      * A css color value for the background of the content box of the email.
-     *
      * @default 'white'
      */
     protected readonly CONTENT_BACKGROUND_COLOR: string = 'white';
 
     /**
      * A css color value for any text elements.
-     *
      * @default '#363636'
      */
     protected readonly TEXT_COLOR: string = '#363636';
 
     /**
      * The default css font family value for text elements.
-     *
      * @default 'Arial, sans-serif'
      */
     protected readonly DEFAULT_FONT_FAMILY: string = 'Arial, sans-serif';
 
     /**
      * A css color value for headline text elements.
-     *
      * @default '#363636'
      */
     protected readonly HEADLINE_TEXT_COLOR: string = '#363636';
@@ -172,7 +170,6 @@ export abstract class BaseMailService<
     /**
      * Sends an email for resetting the password of a specific user.
      * Contains a link that is active for a limited amount of time.
-     *
      * @param user - The user that should receive the email.
      * @param resetToken - The reset token needed to generate the link.
      */
@@ -195,7 +192,6 @@ export abstract class BaseMailService<
 
     /**
      * Gets the content for the reset password email.
-     *
      * @param resetToken - The reset token needed for resetting the password.
      * @param user - The user that tries to reset his password.
      * @returns The finished html string that will be inserted inside the base template.
@@ -221,7 +217,6 @@ export abstract class BaseMailService<
      * Defines what to do with the email.
      * In a production environment this sends the email to the recipients.
      * In a non production environment this saves the email data in a file for testing purposes.
-     *
      * @param email - The email that should be handled.
      */
     protected async handleEmail(email: Email): Promise<void> {
@@ -239,11 +234,10 @@ export abstract class BaseMailService<
     /**
      * Gets the first line for the email based on the user the mail is sent to.
      * This can be used to address the user correctly.
-     *
      * @param user - The user that should receive the email.
      * @returns The string that should be the first line inside the email.
      */
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    // eslint-disable-next-line typescript/no-unused-vars
     protected getFirstLineForUser(user: BaseUserWithRelations<RoleType>): string {
         return 'Hi,';
     }
@@ -251,7 +245,6 @@ export abstract class BaseMailService<
 
     /**
      * Gets the handlebars html template from the given path.
-     *
      * @param path - The path of the template.
      * @returns The compiled handlebars template.
      */

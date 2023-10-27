@@ -64,7 +64,6 @@ export class BaseUserService<RoleType extends string> implements UserService<Bas
 
     /**
      * Requests the reset of the password.
-     *
      * @param requestResetPassword - Contains the email of the user which password should be reset.
      */
     async requestResetPassword(requestResetPassword: RequestResetPasswordGrant): Promise<void> {

@@ -3,9 +3,9 @@ import { BaseUserProfile } from '../models';
 
 /**
  * Checks if the requesting user has one of the allowed roles.
- *
  * @param authorizationContext - The context, containing the user information.
  * @param metadata - The metadata, provided in the @authorize-decorator. Contains allowed roles.
+ * @returns The promise of a decision (if the request is denied or approved).
  */
 export async function roleAuthorization(
     authorizationContext: AuthorizationContext,

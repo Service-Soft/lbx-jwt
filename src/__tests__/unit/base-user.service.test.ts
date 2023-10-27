@@ -11,7 +11,7 @@ import { BaseUserRepository, CredentialsRepository, PasswordResetTokenRepository
 import { BaseMailService, BaseUserService } from '../../services';
 import { DefaultEntityOmitKeys } from '../../types';
 
-// eslint-disable-next-line jsdoc/require-jsdoc
+
 enum Roles {
     USER = 'user',
     ADMIN = 'admin'
@@ -28,33 +28,33 @@ const transaction: juggler.Transaction = {
 };
 testDb.stubs.beginTransaction.resolves(transaction);
 
-// eslint-disable-next-line jsdoc/require-jsdoc
+
 class MailService extends BaseMailService<string> {
-    // eslint-disable-next-line jsdoc/require-jsdoc
+
     protected readonly WEBSERVER_MAIL: string = 'webserver@test.com';
-    // eslint-disable-next-line jsdoc/require-jsdoc
+
     protected readonly BASE_RESET_PASSWORD_LINK: string = 'http://localhost:4200/reset-password';
-    // eslint-disable-next-line jsdoc/require-jsdoc
+
     protected readonly webserverMailTransporter: Transporter;
-    // eslint-disable-next-line jsdoc/require-jsdoc
+
     protected readonly PRODUCTION: boolean = false;
-    // eslint-disable-next-line jsdoc/require-jsdoc
+
     protected readonly SAVED_EMAILS_PATH: string = './test-emails';
-    // eslint-disable-next-line jsdoc/require-jsdoc
+
     protected override readonly LOGO_HEADER_URL: string = 'https://via.placeholder.com/165x165';
-    // eslint-disable-next-line jsdoc/require-jsdoc
+
     protected override readonly LOGO_FOOTER_URL: string = 'https://via.placeholder.com/500x60';
-    // eslint-disable-next-line jsdoc/require-jsdoc
+
     protected readonly ADDRESS_LINES: string[] = ['my address', 'my name'];
 }
 
-// eslint-disable-next-line max-len
+
 const baseUserRepository: StubbedInstanceWithSinonAccessor<BaseUserRepository<Roles>> = createStubInstance(BaseUserRepository) as StubbedInstanceWithSinonAccessor<BaseUserRepository<Roles>>;
 const credentialsRepository: StubbedInstanceWithSinonAccessor<CredentialsRepository> = createStubInstance(CredentialsRepository);
-// eslint-disable-next-line max-len
+
 const passwordResetTokenRepository: StubbedInstanceWithSinonAccessor<PasswordResetTokenRepository<Roles>> = createStubInstance(PasswordResetTokenRepository);
 const mailService: MailService = new MailService();
-// eslint-disable-next-line max-len
+
 const baseUserService: BaseUserService<Roles> = new BaseUserService<Roles>(baseUserRepository, passwordResetTokenRepository, 300000, testDb, mailService);
 
 describe('BaseUserService', () => {
@@ -106,10 +106,10 @@ describe('BaseUserService', () => {
         });
 
         baseUserRepository.stubs.findOne.resolves(user);
-        // eslint-disable-next-line max-len
+
         const credentialsHasOneRepository: StubbedInstanceWithSinonAccessor<HasOneRepository<Credentials>> = createStubInstance(DefaultHasOneRepository);
         credentialsHasOneRepository.stubs.get.resolves(credentials);
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        // eslint-disable-next-line typescript/no-unused-vars
         (baseUserRepository.stubs.credentials as unknown) = (id: string) => credentialsHasOneRepository;
         const userFromVerifiedCredentials: BaseUser<Roles> = await baseUserService.verifyCredentials({
             email: 'user@example.com',

@@ -1,6 +1,8 @@
-import { expect } from '@loopback/testlab';
 import { readFileSync } from 'fs';
+
+import { expect } from '@loopback/testlab';
 import { Transporter } from 'nodemailer';
+
 import { BaseUser, PasswordResetToken } from '../../models';
 import { BaseMailService } from '../../services';
 import { DefaultEntityOmitKeys } from '../../types';

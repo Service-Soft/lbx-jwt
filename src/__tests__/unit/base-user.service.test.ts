@@ -1,9 +1,11 @@
+import { randomBytes } from 'crypto';
+
 import { DefaultHasOneRepository, HasOneRepository, juggler } from '@loopback/repository';
 import { HttpErrors } from '@loopback/rest';
 import { securityId } from '@loopback/security';
 import { SinonSpy, StubbedInstanceWithSinonAccessor, createStubInstance, expect, sinon } from '@loopback/testlab';
-import { randomBytes } from 'crypto';
 import { Transporter } from 'nodemailer';
+
 import { RequestResetPasswordGrant } from '../../controllers/auth/request-reset-password-grant.model';
 import { BcryptUtilities } from '../../encapsulation/bcrypt.utilities';
 import { BaseUser, BaseUserProfile, Credentials, PasswordResetToken } from '../../models';
@@ -109,8 +111,7 @@ describe('BaseUserService', () => {
 
         const credentialsHasOneRepository: StubbedInstanceWithSinonAccessor<HasOneRepository<Credentials>> = createStubInstance(DefaultHasOneRepository);
         credentialsHasOneRepository.stubs.get.resolves(credentials);
-        // eslint-disable-next-line typescript/no-unused-vars
-        (baseUserRepository.stubs.credentials as unknown) = (id: string) => credentialsHasOneRepository;
+        (baseUserRepository.stubs.credentials as unknown) = () => credentialsHasOneRepository;
         const userFromVerifiedCredentials: BaseUser<Roles> = await baseUserService.verifyCredentials({
             email: 'user@example.com',
             password: 'password',

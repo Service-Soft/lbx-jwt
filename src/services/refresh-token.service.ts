@@ -1,16 +1,17 @@
 import { generateUniqueId, inject } from '@loopback/core';
-import { IsolationLevel, juggler } from '@loopback/repository';
+import { Options, juggler } from '@loopback/repository';
 import { HttpErrors } from '@loopback/rest';
 import { securityId } from '@loopback/security';
+
+import { AccessTokenService } from './access-token.service';
+import { BaseUserService } from './base-user.service';
+import { convertMsToSeconds } from './convert-ms-to-seconds.function';
 import { JwtUtilities } from '../encapsulation/jwt.utilities';
 import { LbxJwtBindings } from '../keys';
 import { BaseUser, RefreshToken, RefreshTokenWithRelations } from '../models';
 import { BaseUserProfile } from '../models/base-user-profile.model';
 import { BaseUserRepository, RefreshTokenRepository } from '../repositories';
 import { DefaultEntityOmitKeys, TokenObject } from '../types';
-import { AccessTokenService } from './access-token.service';
-import { BaseUserService } from './base-user.service';
-import { convertMsToSeconds } from './convert-ms-to-seconds.function';
 
 /**
  * The info stored inside an auth token.
@@ -83,62 +84,54 @@ export class RefreshTokenService<RoleType extends string> {
     /**
      * Refresh the access token bound with the given refresh token.
      * @param refreshTokenValue - The refresh token value used to refresh the token.
+     * @param options - Additional options eg. Transaction.
      * @returns An object containing the new access and the new refresh token.
      */
-    async refreshToken(refreshTokenValue: string): Promise<TokenObject> {
-        const refreshToken: RefreshTokenWithRelations = await this.verifyToken(refreshTokenValue);
+    async refreshToken(refreshTokenValue: string, options?: Options): Promise<TokenObject> {
+        const refreshToken: RefreshTokenWithRelations = await this.verifyToken(refreshTokenValue, options);
         if (refreshToken.blacklisted) {
             await this.refreshTokenRepository.deleteAll({ familyId: refreshToken.familyId });
             throw new HttpErrors.Unauthorized('The given refresh token has already been used.');
         }
 
-        const user: BaseUser<RoleType> = await this.baseUserRepository.findById(refreshToken.baseUserId);
+        const user: BaseUser<RoleType> = await this.baseUserRepository.findById(refreshToken.baseUserId, undefined, options);
         const userProfile: BaseUserProfile<RoleType> = this.userService.convertToUserProfile(user);
 
         const newAccessTokenValue: string = await this.accessTokenService.generateToken(userProfile);
-        if (!this.accessTokenIsExpired(refreshToken)) {
+        if (!this.refreshTokenIsExpired(refreshToken)) {
             return {
                 accessToken: newAccessTokenValue,
                 refreshToken: refreshTokenValue
             };
         }
 
-        const transaction: juggler.Transaction = await this.dataSource.beginTransaction(IsolationLevel.READ_COMMITTED);
-        try {
-            const newRefreshTokenPayload: RefreshTokenPayload = {
-                baseUserId: userProfile[securityId],
-                tokenId: generateUniqueId()
-            };
-            const newRefreshTokenValue: string = await JwtUtilities.signAsync(newRefreshTokenPayload, this.refreshTokenSecret, {
-                expiresIn: convertMsToSeconds(this.refreshTokenExpiresInMs),
-                issuer: this.refreshIssuer
-            });
-            const refreshTokenData: Omit<RefreshToken, DefaultEntityOmitKeys | 'id'> = {
-                baseUserId: userProfile[securityId],
-                tokenValue: newRefreshTokenValue,
-                familyId: refreshToken.familyId,
-                blacklisted: false,
-                expirationDate: new Date(Date.now() + this.refreshTokenExpiresInMs)
-            };
-            await this.refreshTokenRepository.create(refreshTokenData, { transaction: transaction });
-            await this.refreshTokenRepository.updateById(refreshToken.id, { blacklisted: true }, { transaction: transaction });
+        const newRefreshTokenPayload: RefreshTokenPayload = {
+            baseUserId: userProfile[securityId],
+            tokenId: generateUniqueId()
+        };
+        const newRefreshTokenValue: string = await JwtUtilities.signAsync(newRefreshTokenPayload, this.refreshTokenSecret, {
+            expiresIn: convertMsToSeconds(this.refreshTokenExpiresInMs),
+            issuer: this.refreshIssuer
+        });
+        const refreshTokenData: Omit<RefreshToken, DefaultEntityOmitKeys | 'id'> = {
+            baseUserId: userProfile[securityId],
+            tokenValue: newRefreshTokenValue,
+            familyId: refreshToken.familyId,
+            blacklisted: false,
+            expirationDate: new Date(Date.now() + this.refreshTokenExpiresInMs)
+        };
+        await this.refreshTokenRepository.create(refreshTokenData, options);
+        await this.refreshTokenRepository.updateById(refreshToken.id, { blacklisted: true }, options);
 
-            await this.refreshTokenRepository.deleteAll({ expirationDate: { lte: new Date() } }, { transaction: transaction });
+        await this.refreshTokenRepository.deleteAll({ expirationDate: { lte: new Date() } }, options);
 
-            await transaction.commit();
-            return {
-                accessToken: newAccessTokenValue,
-                refreshToken: newRefreshTokenValue
-            };
-        }
-        catch (error) {
-            await transaction.rollback();
-            // eslint-disable-next-line typescript/no-unsafe-member-access
-            throw new HttpErrors.Unauthorized(`Error verifying token: ${error.message}`);
-        }
+        return {
+            accessToken: newAccessTokenValue,
+            refreshToken: newRefreshTokenValue
+        };
     }
 
-    private accessTokenIsExpired(refreshToken: RefreshTokenWithRelations): boolean {
+    private refreshTokenIsExpired(refreshToken: RefreshTokenWithRelations): boolean {
         const createdAt: Date = new Date(new Date(refreshToken.expirationDate).getTime() - this.refreshTokenExpiresInMs);
         const accessTokenLifeTimeInMs: number = Date.now() - createdAt.getTime();
         return accessTokenLifeTimeInMs > this.accessTokenExpiresInMs;
@@ -166,13 +159,16 @@ export class RefreshTokenService<RoleType extends string> {
     /**
      * Verify the validity of a refresh token, and make sure it exists in backend.
      * @param refreshToken - The refresh token that should be verified.
+     * @param options - Additional options eg. Transaction.
      * @returns The found refresh token with its relations or an error.
      */
-    async verifyToken(refreshToken: string): Promise<RefreshTokenWithRelations> {
+    async verifyToken(refreshToken: string, options?: Options): Promise<RefreshTokenWithRelations> {
         try {
             await JwtUtilities.verifyAsync(refreshToken, this.refreshTokenSecret);
-            const userRefreshData: RefreshTokenWithRelations | null
-                = await this.refreshTokenRepository.findOne({ where: { tokenValue: refreshToken } });
+            const userRefreshData: RefreshTokenWithRelations | null = await this.refreshTokenRepository.findOne(
+                { where: { tokenValue: refreshToken } },
+                options
+            );
 
             if (!userRefreshData) {
                 throw new HttpErrors.Unauthorized('Error verifying token: Invalid Token');
@@ -182,7 +178,7 @@ export class RefreshTokenService<RoleType extends string> {
         catch (error) {
             throw new HttpErrors.Unauthorized(
                 // eslint-disable-next-line typescript/no-unsafe-member-access
-                `Error verifying token: ${error.message}`
+                `Error verifying refresh token: ${error.message}`
             );
         }
     }

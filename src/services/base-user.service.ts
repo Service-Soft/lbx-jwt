@@ -1,20 +1,22 @@
+import { randomBytes } from 'crypto';
+
 import { UserService } from '@loopback/authentication';
 import { inject } from '@loopback/core';
 import { IsolationLevel, juggler } from '@loopback/repository';
 import { HttpErrors } from '@loopback/rest';
 import { securityId } from '@loopback/security';
-import { randomBytes } from 'crypto';
+
+import { BaseMailService } from './mail/base-mail.service';
+import { LoginCredentials } from '../controllers/auth/login-credentials.model';
+import { RequestResetPasswordGrant } from '../controllers/auth/request-reset-password-grant.model';
 import { BcryptUtilities } from '../encapsulation/bcrypt.utilities';
 import { LbxJwtBindings } from '../keys';
 import { BaseUser, Credentials } from '../models';
 import { BaseUserProfile } from '../models/base-user-profile.model';
-import { LoginCredentials } from '../controllers/auth/login-credentials.model';
 import { PasswordResetToken, PasswordResetTokenWithRelations } from '../models/password-reset-token.model';
-import { RequestResetPasswordGrant } from '../controllers/auth/request-reset-password-grant.model';
 import { BaseUserRepository } from '../repositories';
 import { PasswordResetTokenRepository } from '../repositories/password-reset-token.repository';
 import { DefaultEntityOmitKeys } from '../types';
-import { BaseMailService } from './mail/base-mail.service';
 
 /**
  * The base user service used for authentication and authorization.

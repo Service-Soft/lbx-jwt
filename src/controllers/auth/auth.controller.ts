@@ -3,14 +3,7 @@ import { inject } from '@loopback/core';
 import { IsolationLevel, juggler, model, property } from '@loopback/repository';
 import { HttpErrors, Request, RestBindings, getModelSchemaRef, post, requestBody } from '@loopback/rest';
 import { SecurityBindings } from '@loopback/security';
-import { BcryptUtilities } from '../../encapsulation/bcrypt.utilities';
-import { EncodedJwt, JwtUtilities } from '../../encapsulation/jwt.utilities';
-import { LbxJwtBindings } from '../../keys';
-import { BaseUser, BaseUserProfile, BaseUserWithRelations, Credentials, PasswordResetTokenWithRelations } from '../../models';
-import { BaseUserRepository, CredentialsRepository, PasswordResetTokenRepository, RefreshTokenRepository } from '../../repositories';
-import { AccessTokenService, BaseUserService, RefreshTokenService } from '../../services';
-import { TwoFactorService } from '../../services/two-factor.service';
-import { DefaultEntityOmitKeys, TokenObject } from '../../types';
+
 import { AuthData } from './auth-data.model';
 import { ConfirmResetPassword } from './confirm-reset-password.model';
 import { LoginCredentials } from './login-credentials.model';
@@ -20,6 +13,14 @@ import { Require2FAResponseModel } from './require-2fa-response.model';
 import { RequirePasswordChangeResponseModel } from './require-password-change.model';
 import { ResetPasswordTokenGrant } from './reset-password-token-grant.model';
 import { TurnOn2FAResponse } from './turn-on-2fa-response.model';
+import { BcryptUtilities } from '../../encapsulation/bcrypt.utilities';
+import { EncodedJwt, JwtUtilities } from '../../encapsulation/jwt.utilities';
+import { LbxJwtBindings } from '../../keys';
+import { BaseUser, BaseUserProfile, BaseUserWithRelations, Credentials, PasswordResetTokenWithRelations } from '../../models';
+import { BaseUserRepository, CredentialsRepository, PasswordResetTokenRepository, RefreshTokenRepository } from '../../repositories';
+import { AccessTokenService, BaseUserService, RefreshTokenService } from '../../services';
+import { TwoFactorService } from '../../services/two-factor.service';
+import { DefaultEntityOmitKeys, TokenObject } from '../../types';
 
 @model()
 class VerifyResetTokenResponse {
@@ -74,18 +75,18 @@ export class LbxJwtAuthController<RoleType extends string> {
         {
             responses: {
                 '200': {
-                    description: 'Login was successful, but the user is required to change his password.',
-                    content: {
-                        'application/json': {
-                            schema: getModelSchemaRef(RequirePasswordChangeResponseModel)
-                        }
-                    }
-                },
-                '202': {
                     description: 'Auth Data for the user including the access and refresh token',
                     content: {
                         'application/json': {
                             schema: getModelSchemaRef(AuthData)
+                        }
+                    }
+                },
+                '202': {
+                    description: 'Login was successful, but the user is required to change his password.',
+                    content: {
+                        'application/json': {
+                            schema: getModelSchemaRef(RequirePasswordChangeResponseModel)
                         }
                     }
                 },
@@ -173,22 +174,31 @@ export class LbxJwtAuthController<RoleType extends string> {
         })
         refreshGrant: RefreshGrant
     ): Promise<Omit<AuthData<RoleType>, DefaultEntityOmitKeys>> {
-        const refreshTokenObject: TokenObject = await this.refreshTokenService.refreshToken(refreshGrant.refreshToken);
-        const encodedJwt: EncodedJwt<RoleType> = await JwtUtilities.verifyAsync(refreshTokenObject.accessToken, this.accessTokenSecret);
-        const user: BaseUser<string> = await this.baseUserRepository.findById(encodedJwt.payload.id);
-        return {
-            accessToken: {
-                value: refreshTokenObject.accessToken,
-                expirationDate: new Date(Date.now() + this.accessTokenExpiresInMs)
-            },
-            refreshToken: {
-                value: refreshTokenObject.refreshToken,
-                expirationDate: new Date(Date.now() + this.refreshTokenExpiresInMs)
-            },
-            roles: encodedJwt.payload.roles,
-            twoFactorEnabled: user.twoFactorEnabled ?? false,
-            userId: encodedJwt.payload.id
-        };
+        const transaction: juggler.Transaction = await this.dataSource.beginTransaction(IsolationLevel.READ_COMMITTED);
+        try {
+            const refreshTokenObject: TokenObject = await this.refreshTokenService.refreshToken(refreshGrant.refreshToken, { transaction: transaction });
+            const encodedJwt: EncodedJwt<RoleType> = await JwtUtilities.verifyAsync(refreshTokenObject.accessToken, this.accessTokenSecret);
+            const user: BaseUser<string> = await this.baseUserRepository.findById(encodedJwt.payload.id, undefined, { transaction: transaction });
+            await transaction.commit();
+            return {
+                accessToken: {
+                    value: refreshTokenObject.accessToken,
+                    expirationDate: new Date(Date.now() + this.accessTokenExpiresInMs)
+                },
+                refreshToken: {
+                    value: refreshTokenObject.refreshToken,
+                    expirationDate: new Date(Date.now() + this.refreshTokenExpiresInMs)
+                },
+                roles: encodedJwt.payload.roles,
+                twoFactorEnabled: user.twoFactorEnabled ?? false,
+                userId: encodedJwt.payload.id
+            };
+        }
+        catch (error) {
+            await transaction.rollback();
+            // eslint-disable-next-line typescript/no-unsafe-member-access
+            throw new HttpErrors.Unauthorized(`Error refreshing token: ${error.message}`);
+        }
     }
 
     /**

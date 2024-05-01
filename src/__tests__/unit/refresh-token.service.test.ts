@@ -1,7 +1,9 @@
 import { juggler } from '@loopback/repository';
+import { HttpErrors } from '@loopback/rest';
 import { securityId } from '@loopback/security';
 import { createStubInstance, expect, sinon, StubbedInstanceWithSinonAccessor } from '@loopback/testlab';
 import { Transporter } from 'nodemailer';
+
 import { BaseUser, BaseUserProfile, RefreshTokenWithRelations } from '../../models';
 import { BaseUserRepository, PasswordResetTokenRepository, RefreshTokenRepository } from '../../repositories';
 import { AccessTokenService, BaseMailService, BaseUserService, RefreshTokenService } from '../../services';
@@ -143,8 +145,12 @@ describe('RefreshTokenService', () => {
 
         const refreshToken: RefreshTokenWithRelations = await refreshTokenService.verifyToken(refreshTokenValue);
 
-        sinon.assert.calledWithExactly(refreshTokenRepository.stubs.findOne, { where: { tokenValue: refreshTokenValue } });
+        sinon.assert.calledWithExactly(refreshTokenRepository.stubs.findOne, { where: { tokenValue: refreshTokenValue } }, undefined);
         expect(refreshToken).to.eql(findTokenResult);
+
+        const expectedError: HttpErrors.HttpError<401> = new HttpErrors.Unauthorized('Error verifying refresh token: invalid token');
+        const INVALID_TOKEN: string = 'aaa.bbb.ccc';
+        await expect(refreshTokenService.verifyToken(INVALID_TOKEN)).to.be.rejectedWith(expectedError);
     });
 
     it('revokeToken', async () => {

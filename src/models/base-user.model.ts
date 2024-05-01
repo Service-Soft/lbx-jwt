@@ -1,7 +1,8 @@
 import { inject } from '@loopback/core';
 import { Entity, hasOne, model, property } from '@loopback/repository';
-import { LbxJwtBindings } from '../keys';
+
 import { Credentials } from './credentials.model';
+import { LbxJwtBindings } from '../keys';
 
 /**
  * The base user model with data that all user types share.

@@ -1,9 +1,10 @@
 import { inject, Getter } from '@loopback/core';
 import { DefaultCrudRepository, repository, BelongsToAccessor, juggler } from '@loopback/repository';
+
+import { BaseUserRepository } from './base-user.repository';
 import { LbxJwtBindings } from '../keys';
 import { BaseUser } from '../models';
 import { PasswordResetToken, PasswordResetTokenRelations } from '../models/password-reset-token.model';
-import { BaseUserRepository } from './base-user.repository';
 
 export class PasswordResetTokenRepository<RoleType extends string> extends DefaultCrudRepository<
     PasswordResetToken,

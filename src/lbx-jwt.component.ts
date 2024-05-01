@@ -1,5 +1,6 @@
 import { registerAuthenticationStrategy } from '@loopback/authentication';
 import { Application, Binding, Component, CoreBindings, createBindingFromClass, inject } from '@loopback/core';
+
 import { LbxJwtBindings, LbxJwtDefaultValues } from './keys';
 import { BaseUserRepository, CredentialsRepository, RefreshTokenRepository } from './repositories';
 import { PasswordResetTokenRepository } from './repositories/password-reset-token.repository';

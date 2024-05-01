@@ -1,6 +1,7 @@
 import { Getter } from '@loopback/core';
 import { expect } from '@loopback/testlab';
 import { Secret, TOTP } from 'otpauth';
+
 import { BcryptUtilities } from '../../encapsulation/bcrypt.utilities';
 import { BaseUser, Credentials } from '../../models';
 import { BaseUserRepository, CredentialsRepository } from '../../repositories';

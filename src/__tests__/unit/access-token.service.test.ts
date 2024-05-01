@@ -1,6 +1,7 @@
 import { HttpErrors } from '@loopback/rest';
 import { securityId } from '@loopback/security';
 import { expect } from '@loopback/testlab';
+
 import { BaseUserProfile } from '../../models';
 import { AccessTokenService } from '../../services';
 import { sleep } from '../fixtures/helpers';
@@ -38,7 +39,7 @@ describe('AccessTokenService', () => {
         const userProfileFromToken: BaseUserProfile<string> = await accessTokenService.verifyToken(accessToken);
         expect(userProfileFromToken).to.deepEqual(DECODED_USER_PROFILE);
 
-        const expectedError: HttpErrors.HttpError<401> = new HttpErrors.Unauthorized('Error verifying token: invalid token');
+        const expectedError: HttpErrors.HttpError<401> = new HttpErrors.Unauthorized('Error verifying access token: invalid token');
         const INVALID_TOKEN: string = 'aaa.bbb.ccc';
         await expect(accessTokenService.verifyToken(INVALID_TOKEN)).to.be.rejectedWith(expectedError);
     });

@@ -1,10 +1,11 @@
 import { AuthenticationBindings, AuthenticationMetadata, AuthenticationStrategy, TokenService } from '@loopback/authentication';
 import { inject } from '@loopback/core';
 import { HttpErrors, Request } from '@loopback/rest';
+
+import { TwoFactorService } from './two-factor.service';
 import { LbxJwtBindings } from '../keys';
 import { BaseUser, BaseUserProfile } from '../models';
 import { BaseUserRepository } from '../repositories';
-import { TwoFactorService } from './two-factor.service';
 
 /**
  * The jwt authentication strategy.

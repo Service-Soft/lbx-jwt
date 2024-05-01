@@ -1,4 +1,5 @@
 import { sign, verify, Secret, SignOptions, JwtHeader } from 'jsonwebtoken';
+
 import { JwtPayload } from '../models/jwt.model';
 
 /**
@@ -37,7 +38,8 @@ export abstract class JwtUtilities {
     ): Promise<string> {
         return new Promise((resolve, reject) => {
             try {
-                resolve(sign(payload, secret, options));
+                const jwtValue: string = sign(payload, secret, options);
+                resolve(jwtValue);
             }
             catch (error) {
                 reject(error);
@@ -57,7 +59,8 @@ export abstract class JwtUtilities {
     ): Promise<EncodedJwt<RoleType>> {
         return new Promise((resolve, reject) => {
             try {
-                resolve(verify(token, secret, { complete: true }) as EncodedJwt<RoleType>);
+                const jwt: EncodedJwt<RoleType> = verify(token, secret, { complete: true }) as EncodedJwt<RoleType>;
+                resolve(jwt);
             }
             catch (error) {
                 reject(error);

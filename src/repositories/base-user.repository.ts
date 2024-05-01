@@ -1,8 +1,9 @@
 import { Getter, inject } from '@loopback/core';
 import { DefaultCrudRepository, HasOneRepositoryFactory, juggler, repository } from '@loopback/repository';
+
+import { CredentialsRepository } from './credentials.repository';
 import { LbxJwtBindings } from '../keys';
 import { BaseUser, Credentials, BaseUserRelations } from '../models';
-import { CredentialsRepository } from './credentials.repository';
 
 export class BaseUserRepository<RoleType extends string> extends DefaultCrudRepository<
     BaseUser<RoleType>,

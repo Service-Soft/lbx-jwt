@@ -1,5 +1,6 @@
 import { inject } from '@loopback/core';
 import { Model, model, property } from '@loopback/repository';
+
 import { LbxJwtBindings } from '../../keys';
 import { Jwt } from '../../models';
 

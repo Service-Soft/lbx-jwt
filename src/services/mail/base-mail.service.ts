@@ -1,12 +1,14 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
-import { Transporter } from 'nodemailer';
 import path from 'path';
-import { HandlebarsUtilities } from '../../encapsulation/handlebars.utilities';
-import { BaseUserWithRelations } from '../../models';
-import { PasswordResetTokenWithRelations } from '../../models/password-reset-token.model';
+
+import { Transporter } from 'nodemailer';
+
 import { BaseDefaultDynamicReplacements, BaseDefaultStaticReplacements } from './base-default.replacements';
 import { Email } from './email.model';
 import { ResetPasswordMailReplacements } from './reset-password-mail.replacements';
+import { HandlebarsUtilities } from '../../encapsulation/handlebars.utilities';
+import { BaseUserWithRelations } from '../../models';
+import { PasswordResetTokenWithRelations } from '../../models/password-reset-token.model';
 
 /**
  * The directory for jwt mail templates (eg. For Password reset.).
@@ -237,7 +239,13 @@ export abstract class BaseMailService<
      * @param user - The user that should receive the email.
      * @returns The string that should be the first line inside the email.
      */
-    // eslint-disable-next-line typescript/no-unused-vars
+
+    /**
+     * Gets the first line to use in an email (eg. "Dear Mr. X") based on the user that the email is sent to.
+     * @param user - The user that the email is sent to.
+     * @returns A string, most likely some sort of greeting.
+     */
+    // eslint-disable-next-line unusedImports/no-unused-vars
     protected getFirstLineForUser(user: BaseUserWithRelations<RoleType>): string {
         return 'Hi,';
     }

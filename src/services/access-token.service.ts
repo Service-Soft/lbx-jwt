@@ -2,11 +2,12 @@ import { TokenService } from '@loopback/authentication';
 import { inject } from '@loopback/core';
 import { HttpErrors } from '@loopback/rest';
 import { securityId } from '@loopback/security';
+
+import { convertMsToSeconds } from './convert-ms-to-seconds.function';
 import { EncodedJwt, JwtUtilities } from '../encapsulation/jwt.utilities';
 import { LbxJwtBindings } from '../keys';
 import { BaseUserProfile } from '../models/base-user-profile.model';
 import { JwtPayload } from '../models/jwt.model';
-import { convertMsToSeconds } from './convert-ms-to-seconds.function';
 
 /**
  * Generates and verifies access tokens.
@@ -35,7 +36,7 @@ export class AccessTokenService<RoleType extends string> implements TokenService
         }
         catch (error) {
             // eslint-disable-next-line typescript/no-unsafe-member-access
-            throw new HttpErrors.Unauthorized(`Error verifying token: ${error.message}`);
+            throw new HttpErrors.Unauthorized(`Error verifying access token: ${error.message}`);
         }
     }
 

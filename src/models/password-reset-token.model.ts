@@ -1,4 +1,5 @@
 import { model, property, belongsTo, Entity } from '@loopback/repository';
+
 import { BaseUser } from './base-user.model';
 
 /**

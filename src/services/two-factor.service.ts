@@ -1,9 +1,11 @@
+import crypto from 'crypto';
+
 import { inject } from '@loopback/core';
 import { Options } from '@loopback/repository';
 import { HttpErrors, Request } from '@loopback/rest';
-import crypto from 'crypto';
 import { encode } from 'hi-base32';
 import { TOTP } from 'otpauth';
+
 import { LbxJwtBindings } from '../keys';
 import { BaseUser, Credentials } from '../models';
 import { BaseUserRepository } from '../repositories';

@@ -25,7 +25,7 @@
     "author": "Tim Fabian",
     "scripts": {
         "tsc": "lb-tsc",
-        "build": "npm run clean && npm run tsc",
+        "build": "npm run clean && npm run tsc && npm run copy:mailTemplates",
         "build:prod": "npm run clean && npm run tsc && npm run copy:readme && npm run copy:license && npm run copy:contributing && npm run copy:mailTemplates",
         "build:watch": "npm run build --watch",
         "lint": "eslint --report-unused-disable-directives . --max-warnings 0",

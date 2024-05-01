@@ -24,22 +24,22 @@
     "main": "dist/index.js",
     "author": "Tim Fabian",
     "scripts": {
-        "build": "lb-tsc && npm run copy:mailTemplates",
-        "build:prod": "lb-tsc && npm run copy:readme && npm run copy:license && npm run copy:contributing && npm run copy:mailTemplates",
+        "tsc": "lb-tsc",
+        "build": "npm run clean && npm run tsc",
+        "build:prod": "npm run clean && npm run tsc && npm run copy:readme && npm run copy:license && npm run copy:contributing && npm run copy:mailTemplates",
         "build:watch": "npm run build --watch",
         "lint": "eslint --report-unused-disable-directives . --max-warnings 0",
         "lint:fix": "eslint --report-unused-disable-directives . --fix",
-        "pretest": "npm run rebuild",
+        "pretest": "npm run clean && npm run build",
         "test": "lb-mocha --allow-console-logs \"dist/__tests__\"",
         "posttest": "npm run lint",
         "test:dev": "lb-mocha --allow-console-logs dist/__tests__/**/*.js && npm run posttest",
         "start": "cd showcase && npm run start",
         "clean": "lb-clean dist *.tsbuildinfo .eslintcache",
-        "rebuild": "npm run clean && npm run build",
         "copy:readme": "cp ./README.md dist/README.md",
         "copy:license": "cp ./LICENSE.md dist/LICENSE.md",
         "copy:contributing": "cp ./CONTRIBUTING.md dist/CONTRIBUTING.md",
-        "copy:mailTemplates": "cp -r ./src/services/mail/templates ./dist/services/mail/templates"
+        "copy:mailTemplates": "cp -r ./src/services/mail/templates dist/services/mail/templates"
     },
     "peerDependencies": {
         "@loopback/authentication": "10",

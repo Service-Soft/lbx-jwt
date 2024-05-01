@@ -39,7 +39,7 @@
         "copy:readme": "cp ./README.md dist/README.md",
         "copy:license": "cp ./LICENSE.md dist/LICENSE.md",
         "copy:contributing": "cp ./CONTRIBUTING.md dist/CONTRIBUTING.md",
-        "copy:mailTemplates": "mkdir dist/services/mail/templates && cp -r ./src/services/mail/templates dist/services/mail/templates"
+        "copy:mailTemplates": "cp -r ./src/services/mail/templates ./dist/services/mail/templates"
     },
     "peerDependencies": {
         "@loopback/authentication": "10",

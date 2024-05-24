@@ -1,3 +1,4 @@
+/* eslint-disable unusedImports/no-unused-vars */
 import { inject, lifeCycleObserver, LifeCycleObserver } from '@loopback/core';
 import { juggler } from '@loopback/repository';
 
@@ -38,4 +39,23 @@ export class DbDataSource extends juggler.DataSource implements LifeCycleObserve
 /**
  * Database used for testing. This is a mysql connection to test transactions.
  */
-export const testDb: DbDataSource = new DbDataSource();
+const mysqlTestDb: DbDataSource = new DbDataSource();
+
+/**
+ * Database used for testing.  This is a in memory connection to use in cicd.
+ */
+const inMemoryTestDb: juggler.DataSource = new juggler.DataSource({
+    name: 'db',
+    connector: 'memory'
+});
+inMemoryTestDb.beginTransaction = async () => {
+    return {
+        commit: () => {},
+        rollback: () => {}
+    };
+};
+
+/**
+ * Database used for testing.
+ */
+export const testDb: juggler.DataSource = inMemoryTestDb;

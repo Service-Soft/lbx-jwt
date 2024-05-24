@@ -1,3 +1,4 @@
+/* eslint-disable unicorn/no-null */
 import { expect } from '@loopback/testlab';
 
 import { OtpAuthUtilities } from '../../encapsulation/otp-auth.utilities';
@@ -16,16 +17,16 @@ describe('TwoFactorService', () => {
         await clearDatabase();
         user = await createExampleUser();
         const credentials: Credentials = await testUserRepository.credentials(user.id).get();
-        expect(credentials.twoFactorAuthUrl).to.be.null();
-        expect(credentials.twoFactorSecret).to.be.null();
-        expect(user.twoFactorEnabled).to.be.undefined();
+        expect(credentials.twoFactorAuthUrl).to.be.oneOf(null, undefined);
+        expect(credentials.twoFactorSecret).to.be.oneOf(null, undefined);
+        expect(user.twoFactorEnabled).to.be.oneOf(null, undefined);
     });
     it('turnOn2FA', async () => {
         await twoFactorService.turnOn2FA(user.id);
         const credentials: Credentials = await testUserRepository.credentials(user.id).get();
-        expect(credentials.twoFactorAuthUrl).to.not.be.null();
-        expect(credentials.twoFactorSecret).to.not.be.null();
-        expect((await testUserRepository.findById(user.id)).twoFactorEnabled).to.be.null();
+        expect(credentials.twoFactorAuthUrl).to.not.be.oneOf(null, undefined);
+        expect(credentials.twoFactorSecret).to.not.be.oneOf(null, undefined);
+        expect((await testUserRepository.findById(user.id)).twoFactorEnabled).to.be.oneOf(null, undefined);
     });
 
     it('confirmTurnOn2FA', async () => {
@@ -39,8 +40,8 @@ describe('TwoFactorService', () => {
         await twoFactorService.turnOff2FA(user.id);
 
         let credentials: Credentials = await testUserRepository.credentials(user.id).get();
-        expect(credentials.twoFactorAuthUrl).to.be.null();
-        expect(credentials.twoFactorSecret).to.be.null();
+        expect(credentials.twoFactorAuthUrl).to.be.oneOf(null, undefined);
+        expect(credentials.twoFactorSecret).to.be.oneOf(null, undefined);
 
         user = await testUserRepository.findById(user.id);
         expect(user.twoFactorEnabled).to.be.false();

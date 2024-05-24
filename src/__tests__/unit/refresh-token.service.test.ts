@@ -41,7 +41,7 @@ describe('RefreshTokenService', () => {
 
         // we need to wait so that the time part in the new access token is different.
         // (at least the seconds need to differ)
-        await sleep(1500);
+        await sleep(1000);
 
         const newTokenObject: TokenObject = await testRefreshTokenService.refreshToken(oldRefreshTokenValue);
 
@@ -57,7 +57,7 @@ describe('RefreshTokenService', () => {
         }
         await testRefreshTokenRepository.updateById(refreshToken.id, { expirationDate: new Date() });
 
-        await sleep(1500);
+        await sleep(1000);
 
         const newTokenObjectTwo: TokenObject = await testRefreshTokenService.refreshToken(oldRefreshTokenValue);
 

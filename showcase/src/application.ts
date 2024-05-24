@@ -6,8 +6,8 @@ import { RestApplication } from '@loopback/rest';
 import { ServiceMixin } from '@loopback/service-proxy';
 import path from 'path';
 import { MySequence } from './sequence';
-import { BaseUserRepository, CredentialsRepository, LbxJwtBindings, LbxJwtComponent, RefreshTokenRepository, PasswordResetTokenRepository, LbxJwtAuthController } from 'lbx-jwt';
-import { MailService } from './services';
+import { BaseUserRepository, CredentialsRepository, LbxJwtBindings, LbxJwtComponent, RefreshTokenRepository, PasswordResetTokenRepository, LbxJwtAuthController, BiometricCredentialsRepository } from 'lbx-jwt';
+import { BiometricCredentialsService, MailService } from './services';
 import { AuthenticationComponent } from '@loopback/authentication';
 import { AuthorizationBindings, AuthorizationComponent, AuthorizationDecision, AuthorizationOptions } from '@loopback/authorization';
 
@@ -37,8 +37,10 @@ export class ShowcaseApplication extends BootMixin(ServiceMixin(RepositoryMixin(
         this.bind(LbxJwtBindings.ACCESS_TOKEN_SECRET).to('JwtS3cr3t');
         this.bind(LbxJwtBindings.REFRESH_TOKEN_SECRET).to('JwtR3fr3shS3cr3t');
         this.bind(LbxJwtBindings.MAIL_SERVICE).toClass(MailService);
+        this.bind(LbxJwtBindings.BIOMETRIC_CREDENTIALS_SERVICE).toClass(BiometricCredentialsService);
         this.repository(BaseUserRepository);
         this.repository(CredentialsRepository);
+        this.repository(BiometricCredentialsRepository);
         this.repository(RefreshTokenRepository);
         this.repository(PasswordResetTokenRepository);
         this.controller(LbxJwtAuthController);

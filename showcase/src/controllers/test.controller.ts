@@ -2,7 +2,7 @@ import { authenticate } from '@loopback/authentication';
 import { authorize } from '@loopback/authorization';
 import { inject } from '@loopback/core';
 import { repository } from '@loopback/repository';
-import { get, HttpErrors } from '@loopback/rest';
+import { del, get, HttpErrors } from '@loopback/rest';
 import { SecurityBindings } from '@loopback/security';
 import { BaseUser, BaseUserProfile, BaseUserRepository, roleAuthorization } from 'lbx-jwt';
 import { Roles } from '../models/roles.enum';
@@ -14,7 +14,7 @@ export class TestController {
     constructor(
         @repository(BaseUserRepository)
         private readonly userRepository: BaseUserRepository<Roles>
-    ) {}
+    ) { }
 
     @authenticate('jwt')
     @get('me')
@@ -41,5 +41,14 @@ export class TestController {
     @get('admin-data')
     async getAdminData(): Promise<string> {
         return 'secret admin data';
+    }
+
+    @authenticate('jwt')
+    @del('/all-biometric-credentials')
+    async deleteAll(
+        @inject(SecurityBindings.USER)
+        userProfile: BaseUserProfile<Roles>
+    ): Promise<void> {
+        await this.userRepository.biometricCredentials(userProfile.id).delete();
     }
 }

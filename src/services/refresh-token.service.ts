@@ -1,5 +1,5 @@
 import { generateUniqueId, inject } from '@loopback/core';
-import { Options, juggler } from '@loopback/repository';
+import { Options } from '@loopback/repository';
 import { HttpErrors } from '@loopback/rest';
 import { securityId } from '@loopback/security';
 
@@ -46,8 +46,6 @@ export class RefreshTokenService<RoleType extends string> {
         private readonly userService: BaseUserService<RoleType>,
         @inject(LbxJwtBindings.ACCESS_TOKEN_SERVICE)
         private readonly accessTokenService: AccessTokenService<RoleType>,
-        @inject(LbxJwtBindings.REFRESH_TOKEN_DATASOURCE_KEY)
-        private readonly dataSource: juggler.DataSource,
         @inject(LbxJwtBindings.ACCESS_TOKEN_EXPIRES_IN_MS)
         private readonly accessTokenExpiresInMs: number
     ) {}
@@ -151,7 +149,7 @@ export class RefreshTokenService<RoleType extends string> {
             }
             await this.refreshTokenRepository.deleteAll({ familyId: refreshToken.familyId });
         }
-        catch (e) {
+        catch (error) {
             // ignore
         }
     }

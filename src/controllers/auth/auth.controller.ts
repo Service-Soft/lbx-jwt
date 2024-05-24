@@ -1,24 +1,31 @@
 import { authenticate } from '@loopback/authentication';
 import { inject } from '@loopback/core';
 import { IsolationLevel, juggler, model, property } from '@loopback/repository';
-import { HttpErrors, Request, RestBindings, getModelSchemaRef, post, requestBody } from '@loopback/rest';
+import { HttpErrors, Request, RestBindings, del, get, getModelSchemaRef, param, post, requestBody } from '@loopback/rest';
 import { SecurityBindings } from '@loopback/security';
 
+import { Require2FAResponseModel } from './2fa/require-2fa-response.model';
+import { TurnOn2FAResponse } from './2fa/turn-on-2fa-response.model';
 import { AuthData } from './auth-data.model';
+import { AuthenticationResponse } from './biometric/authentication-response.model';
+import { BiometricRegistrationOptions } from './biometric/biometric-registration-options.model';
+import { BiometricRegistrationResponse } from './biometric/biometric-registration-response.model';
+import { ConfirmBiometricRegistrationResponse } from './biometric/confirm-biometric-registration-response.model';
+import { PublicKeyCredentialRequestOptions } from './biometric/public-key-credential-request-options.model';
+import { VerifiedBiometricRegistration } from './biometric/verified-biometric-registration.model';
 import { ConfirmResetPassword } from './confirm-reset-password.model';
 import { LoginCredentials } from './login-credentials.model';
 import { RefreshGrant } from './refresh-grant.model';
 import { RequestResetPasswordGrant } from './request-reset-password-grant.model';
-import { Require2FAResponseModel } from './require-2fa-response.model';
 import { RequirePasswordChangeResponseModel } from './require-password-change.model';
 import { ResetPasswordTokenGrant } from './reset-password-token-grant.model';
-import { TurnOn2FAResponse } from './turn-on-2fa-response.model';
 import { BcryptUtilities } from '../../encapsulation/bcrypt.utilities';
 import { EncodedJwt, JwtUtilities } from '../../encapsulation/jwt.utilities';
+import { Base64UrlString } from '../../encapsulation/webauthn.utilities';
 import { LbxJwtBindings } from '../../keys';
-import { BaseUser, BaseUserProfile, BaseUserWithRelations, Credentials, PasswordResetTokenWithRelations } from '../../models';
-import { BaseUserRepository, CredentialsRepository, PasswordResetTokenRepository, RefreshTokenRepository } from '../../repositories';
-import { AccessTokenService, BaseUserService, RefreshTokenService } from '../../services';
+import { BaseUser, BaseUserProfile, BaseUserWithRelations, BiometricCredentials, Credentials, PasswordResetTokenWithRelations } from '../../models';
+import { BaseUserRepository, BiometricCredentialsRepository, CredentialsRepository, PasswordResetTokenRepository, RefreshTokenRepository } from '../../repositories';
+import { AccessTokenService, BaseBiometricCredentialsService, BaseUserService, RefreshTokenService } from '../../services';
 import { TwoFactorService } from '../../services/two-factor.service';
 import { DefaultEntityOmitKeys, TokenObject } from '../../types';
 
@@ -30,6 +37,8 @@ class VerifyResetTokenResponse {
     })
     isValid: boolean;
 }
+
+const PENDING: string = 'PENDING';
 
 /**
  * Exposes endpoints regarding authentication and authorization (eg. Login or resetting a users password).
@@ -50,6 +59,8 @@ export class LbxJwtAuthController<RoleType extends string> {
         private readonly baseUserRepository: BaseUserRepository<RoleType>,
         @inject(LbxJwtBindings.CREDENTIALS_REPOSITORY)
         private readonly credentialsRepository: CredentialsRepository,
+        @inject(LbxJwtBindings.BIOMETRIC_CREDENTIALS_REPOSITORY)
+        private readonly biometricCredentialsRepository: BiometricCredentialsRepository,
         @inject(LbxJwtBindings.DATASOURCE_KEY)
         private readonly dataSource: juggler.DataSource,
         @inject(LbxJwtBindings.ACCESS_TOKEN_EXPIRES_IN_MS)
@@ -61,8 +72,10 @@ export class LbxJwtAuthController<RoleType extends string> {
         @inject(LbxJwtBindings.TWO_FACTOR_SERVICE)
         private readonly twoFactorService: TwoFactorService<RoleType>,
         @inject(LbxJwtBindings.TWO_FACTOR_HEADER)
-        private readonly twoFactorHeader: string
-    ) {}
+        private readonly twoFactorHeader: string,
+        @inject(LbxJwtBindings.BIOMETRIC_CREDENTIALS_SERVICE)
+        private readonly biometricCredentialsService: BaseBiometricCredentialsService
+    ) { }
 
     /**
      * Tries to login a user with the provided email and password.
@@ -74,7 +87,7 @@ export class LbxJwtAuthController<RoleType extends string> {
         'login',
         {
             responses: {
-                '200': {
+                200: {
                     description: 'Auth Data for the user including the access and refresh token',
                     content: {
                         'application/json': {
@@ -82,7 +95,7 @@ export class LbxJwtAuthController<RoleType extends string> {
                         }
                     }
                 },
-                '202': {
+                202: {
                     description: 'Login was successful, but the user is required to change his password.',
                     content: {
                         'application/json': {
@@ -90,7 +103,7 @@ export class LbxJwtAuthController<RoleType extends string> {
                         }
                     }
                 },
-                '206': {
+                206: {
                     description: 'Requires 2 factor code.',
                     content: {
                         'application/json': {
@@ -106,11 +119,16 @@ export class LbxJwtAuthController<RoleType extends string> {
             required: true,
             content: {
                 'application/json': {
-                    schema: getModelSchemaRef(LoginCredentials)
+                    schema: {
+                        oneOf: [
+                            getModelSchemaRef(LoginCredentials),
+                            getModelSchemaRef(AuthenticationResponse)
+                        ]
+                    }
                 }
             }
         })
-        loginCredentials: LoginCredentials,
+        loginCredentials: LoginCredentials | AuthenticationResponse,
         @inject(RestBindings.Http.REQUEST)
         request: Request
     ): Promise<Omit<AuthData<RoleType>, DefaultEntityOmitKeys> | Require2FAResponseModel | RequirePasswordChangeResponseModel> {
@@ -130,6 +148,7 @@ export class LbxJwtAuthController<RoleType extends string> {
         }
         const userProfile: BaseUserProfile<RoleType> = this.baseUserService.convertToUserProfile(user);
         const accessToken: string = await this.accessTokenService.generateToken(userProfile);
+        const biometricCredentials: BiometricCredentials[] = await this.baseUserRepository.biometricCredentials(user.id).find();
         const refreshTokenObject: TokenObject = await this.refreshTokenService.generateToken(userProfile, accessToken);
         return {
             accessToken: {
@@ -142,7 +161,8 @@ export class LbxJwtAuthController<RoleType extends string> {
             },
             roles: user.roles,
             twoFactorEnabled: user.twoFactorEnabled ?? false,
-            userId: user.id
+            userId: user.id,
+            biometricCredentials: biometricCredentials
         };
     }
 
@@ -153,7 +173,7 @@ export class LbxJwtAuthController<RoleType extends string> {
      */
     @post('refresh-token', {
         responses: {
-            '200': {
+            200: {
                 description: 'Auth Data for the user including the access and refresh token',
                 content: {
                     'application/json': {
@@ -176,9 +196,16 @@ export class LbxJwtAuthController<RoleType extends string> {
     ): Promise<Omit<AuthData<RoleType>, DefaultEntityOmitKeys>> {
         const transaction: juggler.Transaction = await this.dataSource.beginTransaction(IsolationLevel.READ_COMMITTED);
         try {
-            const refreshTokenObject: TokenObject = await this.refreshTokenService.refreshToken(refreshGrant.refreshToken, { transaction: transaction });
+            const refreshTokenObject: TokenObject = await this.refreshTokenService.refreshToken(
+                refreshGrant.refreshToken,
+                { transaction: transaction }
+            );
             const encodedJwt: EncodedJwt<RoleType> = await JwtUtilities.verifyAsync(refreshTokenObject.accessToken, this.accessTokenSecret);
-            const user: BaseUser<string> = await this.baseUserRepository.findById(encodedJwt.payload.id, undefined, { transaction: transaction });
+            const user: BaseUser<RoleType> = await this.baseUserRepository.findById(
+                encodedJwt.payload.id,
+                { include: [{ relation: 'biometricCredentials' }] },
+                { transaction: transaction }
+            );
             await transaction.commit();
             return {
                 accessToken: {
@@ -191,7 +218,8 @@ export class LbxJwtAuthController<RoleType extends string> {
                 },
                 roles: encodedJwt.payload.roles,
                 twoFactorEnabled: user.twoFactorEnabled ?? false,
-                userId: encodedJwt.payload.id
+                userId: encodedJwt.payload.id,
+                biometricCredentials: user.biometricCredentials ?? []
             };
         }
         catch (error) {
@@ -207,7 +235,7 @@ export class LbxJwtAuthController<RoleType extends string> {
      */
     @post('logout', {
         responses: {
-            '200': {
+            200: {
                 description: 'Logout successful'
             }
         }
@@ -232,7 +260,7 @@ export class LbxJwtAuthController<RoleType extends string> {
      */
     @post('request-reset-password', {
         responses: {
-            '200': {
+            200: {
                 description: 'ResetPassword Request successful'
             }
         }
@@ -259,7 +287,7 @@ export class LbxJwtAuthController<RoleType extends string> {
      */
     @post('verify-password-reset-token', {
         responses: {
-            '204': {
+            204: {
                 description: 'ResetToken Verify success',
                 content: getModelSchemaRef(VerifyResetTokenResponse)
             }
@@ -300,7 +328,7 @@ export class LbxJwtAuthController<RoleType extends string> {
      */
     @post('confirm-reset-password', {
         responses: {
-            '200': {
+            200: {
                 description: 'ResetPassword success'
             }
         }
@@ -353,7 +381,7 @@ export class LbxJwtAuthController<RoleType extends string> {
     @authenticate('jwt')
     @post('/2fa/turn-on', {
         responses: {
-            '200': {
+            200: {
                 content: {
                     'application/json': {
                         schema: getModelSchemaRef(TurnOn2FAResponse)
@@ -364,7 +392,7 @@ export class LbxJwtAuthController<RoleType extends string> {
     })
     async turnOn2FA(
         @inject(SecurityBindings.USER)
-        userProfile: BaseUserProfile<string>
+        userProfile: BaseUserProfile<RoleType>
     ): Promise<TurnOn2FAResponse> {
         const transaction: juggler.Transaction = await this.dataSource.beginTransaction(IsolationLevel.READ_COMMITTED);
         try {
@@ -386,14 +414,14 @@ export class LbxJwtAuthController<RoleType extends string> {
     @authenticate('jwt')
     @post('/2fa/confirm-turn-on', {
         responses: {
-            '200': {
+            200: {
                 description: 'Success'
             }
         }
     })
     async confirmTurnOn2FA(
         @inject(SecurityBindings.USER)
-        userProfile: BaseUserProfile<string>,
+        userProfile: BaseUserProfile<RoleType>,
         @inject(RestBindings.Http.REQUEST)
         request: Request
     ): Promise<void> {
@@ -416,14 +444,14 @@ export class LbxJwtAuthController<RoleType extends string> {
     @authenticate('jwt')
     @post('/2fa/turn-off', {
         responses: {
-            '200': {
+            200: {
                 description: 'Success'
             }
         }
     })
     async turnOff2FA(
         @inject(SecurityBindings.USER)
-        userProfile: BaseUserProfile<string>
+        userProfile: BaseUserProfile<RoleType>
     ): Promise<void> {
         const transaction: juggler.Transaction = await this.dataSource.beginTransaction(IsolationLevel.READ_COMMITTED);
         try {
@@ -434,5 +462,142 @@ export class LbxJwtAuthController<RoleType extends string> {
             await transaction.rollback();
             throw error;
         }
+    }
+
+    @authenticate('jwt')
+    @post('/biometric/register', {
+        responses: {
+            200: {
+                content: {
+                    'application/json': {
+                        schema: getModelSchemaRef(BiometricRegistrationOptions)
+                    }
+                }
+            }
+        }
+    })
+    async registerBiometricCredential(
+        @inject(SecurityBindings.USER)
+        userProfile: BaseUserProfile<RoleType>
+    ): Promise<BiometricRegistrationOptions> {
+        const baseUser: BaseUser<RoleType> = await this.baseUserRepository.findById(
+            userProfile.id,
+            { include: [{ relation: 'biometricCredentials' }] }
+        );
+        const options: BiometricRegistrationOptions = await this.biometricCredentialsService.generateRegistrationOptions(
+            baseUser.email,
+            baseUser.biometricCredentials ?? []
+        );
+        const credentials: Omit<BiometricCredentials, DefaultEntityOmitKeys | 'id' | 'baseUserId'> = {
+            challenge: options.challenge,
+            credentialId: PENDING as Base64UrlString,
+            publicKey: PENDING as Base64UrlString,
+            counter: 0
+        };
+        await this.baseUserRepository.biometricCredentials(baseUser.id).create(credentials);
+        return options;
+    }
+
+    @authenticate('jwt')
+    @del('/biometric/cancel-register/{challenge}', {
+        responses: {
+            200: {
+                description: 'Success'
+            }
+        }
+    })
+    async cancelBiometricRegistration(
+        @inject(SecurityBindings.USER)
+        userProfile: BaseUserProfile<RoleType>,
+        @param.path.string('challenge')
+        challenge: string
+    ): Promise<void> {
+        await this.baseUserRepository.biometricCredentials(userProfile.id).delete({
+            challenge: challenge as Base64UrlString,
+            counter: 0,
+            credentialId: PENDING as Base64UrlString,
+            publicKey: PENDING as Base64UrlString
+        });
+    }
+
+    @authenticate('jwt')
+    @post('/biometric/confirm-register/{challenge}', {
+        responses: {
+            200: {
+                content: {
+                    'application/json': {
+                        schema: getModelSchemaRef(ConfirmBiometricRegistrationResponse)
+                    }
+                }
+            }
+        }
+    })
+    async confirmRegisterBiometricCredentials(
+        @inject(SecurityBindings.USER)
+        userProfile: BaseUserProfile<RoleType>,
+        @requestBody({
+            required: true,
+            content: {
+                'application/json': {
+                    schema: getModelSchemaRef(BiometricRegistrationResponse)
+                }
+            }
+        })
+        body: BiometricRegistrationResponse,
+        @param.path.string('challenge')
+        challenge: string
+    ): Promise<ConfirmBiometricRegistrationResponse> {
+        const baseUser: BaseUser<RoleType> = await this.baseUserRepository.findById(
+            userProfile.id,
+            { include: [{ relation: 'biometricCredentials' }] }
+        );
+        const existingBiometricCredential: BiometricCredentials | undefined = baseUser.biometricCredentials?.find(bc => {
+            return bc.challenge === challenge
+                && bc.credentialId === PENDING
+                && bc.counter === 0
+                && bc.publicKey === PENDING;
+        });
+        const res: VerifiedBiometricRegistration = await this.biometricCredentialsService.verifyRegistrationResponse(
+            body,
+            existingBiometricCredential?.challenge
+        );
+        if (res.verified && existingBiometricCredential) {
+            await this.biometricCredentialsRepository.updateById(existingBiometricCredential.id, {
+                credentialId: res.registrationInfo?.credentialID,
+                publicKey: res.registrationInfo?.credentialPublicKey,
+                counter: res.registrationInfo?.counter
+            });
+        }
+        const biometricCredentials: BiometricCredentials[] = await this.baseUserRepository.biometricCredentials(baseUser.id).find();
+        return {
+            biometricCredentials: biometricCredentials,
+            verified: res.verified
+        };
+    }
+
+    @get('/biometric/authentication-options/{userId}', {
+        responses: {
+            200: {
+                content: {
+                    'application/json': {
+                        schema: getModelSchemaRef(PublicKeyCredentialRequestOptions)
+                    }
+                }
+            }
+        }
+    })
+    async generateAuthenticationOptions(
+        @param.path.string('userId')
+        userId: string
+    ): Promise<PublicKeyCredentialRequestOptions> {
+        const user: BaseUser<RoleType> = await this.baseUserRepository.findById(
+            userId,
+            { include: [{ relation: 'biometricCredentials' }] }
+        );
+        const options: PublicKeyCredentialRequestOptions = await this.biometricCredentialsService.generateAuthenticationOptions(
+            user.biometricCredentials ?? []
+        );
+        await this.baseUserRepository.biometricCredentials(user.id).patch({ challenge: options.challenge });
+        return options;
     }
 }

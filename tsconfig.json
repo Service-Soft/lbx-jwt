@@ -10,7 +10,10 @@
         "noPropertyAccessFromIndexSignature": true,
         "noImplicitReturns": true,
         "noFallthroughCasesInSwitch": true,
-        "rootDir": "src"
+        "rootDir": "src",
+        "lib": [
+            "ES2023"
+        ]
     },
     "include": [
         "src"

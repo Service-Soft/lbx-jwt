@@ -9,10 +9,11 @@
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "engines": {
-        "node": "14 || 16 || 17 || 18"
+        "node": ">=20"
     },
     "scripts": {
-        "build": "lb-tsc",
+        "tsc": "lb-tsc",
+        "build": "npm run clean && npm run tsc",
         "build:watch": "lb-tsc --watch",
         "pretest": "npm run rebuild",
         "test": "lb-mocha --allow-console-logs \"dist/__tests__\"",
@@ -49,13 +50,13 @@
         "@loopback/rest-explorer": "^6.1.1",
         "@loopback/service-proxy": "^6.1.1",
         "lbx-jwt": "file:..",
-        "loopback-connector-mysql": "^5.4.4",
+        "loopback-connector-mysql": "^7.0.9",
         "tslib": "^2.0.0"
     },
     "devDependencies": {
         "@loopback/build": "^10.1.1",
         "@loopback/testlab": "^6.1.1",
-        "@types/node": "^16.18.38",
+        "@types/node": "^20.5.0",
         "source-map-support": "^0.5.21",
         "tsc-watch": "^6.0.4",
         "typescript": "~5.1.6"

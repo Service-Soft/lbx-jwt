@@ -69,6 +69,15 @@ export class MailService extends BaseMailService<Roles> {
 }
 ```
 
+## Create your own biometric credentials service
+```ts
+@bind({ scope: BindingScope.TRANSIENT })
+export class BiometricCredentialsService extends BaseBiometricCredentialsService {
+    protected readonly RP_NAME: string = 'Test';
+    protected readonly RP_DOMAIN: string = 'localhost';
+}
+```
+
 ## Enjoy!
 That's it, now you can use it inside your code:
 ```typescript

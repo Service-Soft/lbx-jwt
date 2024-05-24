@@ -9,3 +9,4 @@ export * from './refresh-token.service';
 export * from './role.authorizer';
 export * from './security.spec.enhancer';
 export * from './two-factor.service';
+export * from './base-biometric-credentials.service';

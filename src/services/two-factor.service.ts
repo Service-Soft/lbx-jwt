@@ -3,9 +3,9 @@ import crypto from 'crypto';
 import { inject } from '@loopback/core';
 import { Options } from '@loopback/repository';
 import { HttpErrors, Request } from '@loopback/rest';
-import { encode } from 'hi-base32';
-import { TOTP } from 'otpauth';
 
+import { HiBase32Utilities } from '../encapsulation/hi-base32.utilities';
+import { OtpAuthUtilities, OtpTOTP } from '../encapsulation/otp-auth.utilities';
 import { LbxJwtBindings } from '../keys';
 import { BaseUser, Credentials } from '../models';
 import { BaseUserRepository } from '../repositories';
@@ -23,7 +23,7 @@ export class TwoFactorService<RoleType extends string> {
         protected readonly twoFactorHeader: string,
         @inject(LbxJwtBindings.TWO_FACTOR_LABEL, { optional: true })
         protected readonly twoFactorLabel?: string
-    ) {}
+    ) { }
 
     /**
      * Generates a secret and a two factor auth url to use for a qr code.
@@ -39,9 +39,15 @@ export class TwoFactorService<RoleType extends string> {
         }
 
         const secret: string = this.generateSecret();
-        const totp: TOTP = new TOTP({ label: this.twoFactorLabel, secret: secret });
+        const totp: OtpTOTP = OtpAuthUtilities.createTOTP({
+            label: this.twoFactorLabel,
+            secret: secret
+        });
 
-        await this.baseUserRepository.credentials(userId).patch({ twoFactorSecret: secret, twoFactorAuthUrl: totp.toString() }, options);
+        await this.baseUserRepository.credentials(userId).patch({
+            twoFactorSecret: secret,
+            twoFactorAuthUrl: totp.toString()
+        }, options);
 
         return totp.toString();
     }
@@ -69,7 +75,10 @@ export class TwoFactorService<RoleType extends string> {
                 Override LbxJwtBindings.FORCE_TWO_FACTOR if you want to enable turning it off.
             `);
         }
-        await this.baseUserRepository.credentials(userId).patch({ twoFactorSecret: undefined, twoFactorAuthUrl: undefined }, options);
+        await this.baseUserRepository.credentials(userId).patch({
+            twoFactorSecret: undefined,
+            twoFactorAuthUrl: undefined
+        }, options);
         await this.baseUserRepository.updateById(userId, { twoFactorEnabled: false }, options);
     }
 
@@ -101,15 +110,21 @@ export class TwoFactorService<RoleType extends string> {
      */
     async validateCode(userId: string, code: string, options?: Options): Promise<void> {
         const credentials: Credentials = await this.baseUserRepository.credentials(userId).get(undefined, options);
-        const totp: TOTP = new TOTP({ label: this.twoFactorLabel, secret: credentials.twoFactorSecret });
-        if (totp.validate({ token: code }) == null) {
+        const totp: OtpTOTP = OtpAuthUtilities.createTOTP({
+            label: this.twoFactorLabel,
+            secret: credentials.twoFactorSecret
+        });
+        if (totp.validate({ token: code }) == undefined) {
             throw new HttpErrors.Unauthorized('The provided two factor code is invalid.');
         }
     }
 
     private generateSecret(): string {
         const buffer: Buffer = crypto.randomBytes(15);
-        const base32: string = encode(buffer).replace(/=/g, '').substring(0, 24);
+        const base32: string = HiBase32Utilities
+            .encode(buffer)
+            .replaceAll('=', '')
+            .substring(0, 24);
         return base32;
     }
 }

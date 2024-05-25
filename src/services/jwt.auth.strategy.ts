@@ -92,6 +92,7 @@ export class JwtAuthenticationStrategy implements AuthenticationStrategy {
         const parts: string[] = authHeaderValue.split(' ');
         if (parts.length !== 2) {
             throw new HttpErrors.Unauthorized(
+                // eslint-disable-next-line stylistic/max-len
                 'Authorization header value has too many parts. It must follow the pattern: \'Bearer xx.yy.zz\' where xx.yy.zz is a valid JWT token.'
             );
         }

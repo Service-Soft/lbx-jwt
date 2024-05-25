@@ -55,7 +55,7 @@ export class RegisterController {
         // eslint-disable-next-line typescript/typedef
         const transaction = await this.dataSource.beginTransaction(IsolationLevel.READ_COMMITTED);
         try {
-            const baseUser: Omit<BaseUser<Roles>, DefaultEntityOmitKeys | 'credentials' | 'id'> = {
+            const baseUser: Omit<BaseUser<Roles>, DefaultEntityOmitKeys | 'credentials' | 'biometricCredentials' | 'id'> = {
                 email: newUser.email,
                 roles: [Roles.USER]
             };
@@ -68,7 +68,8 @@ export class RegisterController {
             return {
                 id: finishedBaseUser.id,
                 email: finishedBaseUser.email,
-                roles: finishedBaseUser.roles
+                roles: finishedBaseUser.roles,
+                biometricCredentials: []
             };
         }
         catch (error) {

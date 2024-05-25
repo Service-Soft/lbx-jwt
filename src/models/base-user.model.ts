@@ -1,6 +1,7 @@
 import { inject } from '@loopback/core';
-import { Entity, hasOne, model, property } from '@loopback/repository';
+import { Entity, hasMany, hasOne, model, property } from '@loopback/repository';
 
+import { BiometricCredentials } from './biometric-credentials.model';
 import { Credentials } from './credentials.model';
 import { LbxJwtBindings } from '../keys';
 
@@ -71,6 +72,13 @@ export class BaseUser<RoleType extends string> extends Entity {
      */
     @hasOne(() => Credentials)
     credentials: Credentials;
+
+    /**
+     * The credentials of the user.
+     * Contains the hashed password.
+     */
+    @hasMany(() => BiometricCredentials)
+    biometricCredentials?: BiometricCredentials[];
 
     /**
      * Helper for defining the roles open api.

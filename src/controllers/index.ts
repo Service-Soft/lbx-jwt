@@ -5,5 +5,6 @@ export * from './auth/login-credentials.model';
 export * from './auth/refresh-grant.model';
 export * from './auth/request-reset-password-grant.model';
 export * from './auth/reset-password-token-grant.model';
-export * from './auth/turn-on-2fa-response.model';
-export * from './auth/require-2fa-response.model';
+export * from './auth/2fa/turn-on-2fa-response.model';
+export * from './auth/2fa/require-2fa-response.model';
+export * from './auth/biometric/biometric-registration-options.model';

@@ -80,6 +80,12 @@ export abstract class BaseMailService<
     protected abstract readonly ADDRESS_LINES: string[];
 
     /**
+     * The label for Password Reset.
+     * @default 'Password Reset'
+     */
+    protected readonly PASSWORD_RESET_LABEL: string = 'Password Reset';
+
+    /**
      * A css color value for the address lines in the footer.
      */
     protected readonly ADDRESS_LINES_COLOR: string = '#999999';
@@ -167,7 +173,7 @@ export abstract class BaseMailService<
         return res as DefaultStaticReplacementsType;
     }
 
-    constructor() {}
+    constructor() { }
 
     /**
      * Sends an email for resetting the password of a specific user.
@@ -177,8 +183,8 @@ export abstract class BaseMailService<
      */
     async sendResetPasswordMail(user: BaseUserWithRelations<RoleType>, resetToken: PasswordResetTokenWithRelations): Promise<void> {
         const replacements: BaseDefaultStaticReplacements & BaseDefaultDynamicReplacements = {
-            headline: 'Password Reset',
-            title: 'Password Reset',
+            headline: this.PASSWORD_RESET_LABEL,
+            title: this.PASSWORD_RESET_LABEL,
             content: this.getResetPasswordContent(resetToken, user),
             ...this.defaultStaticReplacements
         };
@@ -186,7 +192,7 @@ export abstract class BaseMailService<
         const email: Email = {
             to: user.email,
             from: this.WEBSERVER_MAIL,
-            subject: 'Password Reset',
+            subject: this.PASSWORD_RESET_LABEL,
             html: this.getTemplate(this.BASE_MAIL_TEMPLATE_PATH)(replacements)
         };
         await this.handleEmail(email);
@@ -230,7 +236,7 @@ export abstract class BaseMailService<
             mkdirSync(this.SAVED_EMAILS_PATH);
         }
         // for testing emails
-        writeFileSync(`${this.SAVED_EMAILS_PATH}/${email.subject.replace(/ /g, '')}.test.html`, email.html);
+        writeFileSync(`${this.SAVED_EMAILS_PATH}/${email.subject.replaceAll(' ', '')}.test.html`, email.html);
     }
 
     /**
@@ -250,14 +256,13 @@ export abstract class BaseMailService<
         return 'Hi,';
     }
 
-
     /**
      * Gets the handlebars html template from the given path.
      * @param path - The path of the template.
      * @returns The compiled handlebars template.
      */
     protected getTemplate(path: string): HandlebarsTemplateDelegate<unknown> {
-        const sourceData: string = readFileSync(path, 'utf-8').toString();
+        const sourceData: string = readFileSync(path, 'utf8').toString();
         return HandlebarsUtilities.compile(sourceData);
     }
 }

@@ -1,16 +1,26 @@
+import { model, property } from '@loopback/repository';
 
 /**
  * A Json Web Token, containing the token itself and its expiration date.
  */
-export interface Jwt {
+@model()
+export class Jwt {
     /**
      * The token value.
      */
-    value: string,
+    @property({
+        type: 'string',
+        required: true
+    })
+    value: string;
     /**
      * The timestamp at which the token is no longer valid.
      */
-    expirationDate: Date
+    @property({
+        type: 'date',
+        required: true
+    })
+    expirationDate: Date;
 }
 
 /**

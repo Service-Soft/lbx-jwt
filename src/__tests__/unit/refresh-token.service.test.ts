@@ -1,179 +1,141 @@
-import { juggler } from '@loopback/repository';
+import { IsolationLevel, juggler } from '@loopback/repository';
 import { HttpErrors } from '@loopback/rest';
 import { securityId } from '@loopback/security';
-import { createStubInstance, expect, sinon, StubbedInstanceWithSinonAccessor } from '@loopback/testlab';
-import { Transporter } from 'nodemailer';
+import { SinonSpy, expect, sinon } from '@loopback/testlab';
 
-import { BaseUser, BaseUserProfile, RefreshTokenWithRelations } from '../../models';
-import { BaseUserRepository, PasswordResetTokenRepository, RefreshTokenRepository } from '../../repositories';
-import { AccessTokenService, BaseMailService, BaseUserService, RefreshTokenService } from '../../services';
+import { AuthData } from '../../controllers';
+import { EncodedJwt, JwtUtilities } from '../../encapsulation/jwt.utilities';
+import { BaseUser, BaseUserProfile, RefreshToken, RefreshTokenWithRelations } from '../../models';
 import { DefaultEntityOmitKeys, TokenObject } from '../../types';
-import { sleep } from '../fixtures/helpers';
+import { testDb } from '../fixtures/db.fixture';
+import { clearDatabase, createExampleUser, sleep } from '../fixtures/helpers';
+import { testRefreshTokenRepository, testUserRepository } from '../fixtures/repositories.fixture';
+import { TestRoles } from '../fixtures/roles.fixture';
+import { testAccessTokenService, testRefreshTokenService } from '../fixtures/services.fixture';
 
-
-enum Roles {
-    USER = 'user',
-    ADMIN = 'admin'
-}
-
-
-class MailService extends BaseMailService<Roles> {
-
-    protected readonly WEBSERVER_MAIL: string = 'webserver@test.com';
-
-    protected readonly BASE_RESET_PASSWORD_LINK: string = 'http://localhost:4200/reset-password';
-
-    protected readonly webserverMailTransporter: Transporter;
-
-    protected readonly PRODUCTION: boolean = false;
-
-    protected readonly SAVED_EMAILS_PATH: string = './test-emails';
-
-    protected override readonly LOGO_HEADER_URL: string = 'https://via.placeholder.com/165x165';
-
-    protected override readonly LOGO_FOOTER_URL: string = 'https://via.placeholder.com/500x60';
-
-    protected readonly ADDRESS_LINES: string[] = ['my address', 'my name'];
-}
-
-const testDb: StubbedInstanceWithSinonAccessor<juggler.DataSource> = createStubInstance(juggler.DataSource);
-const transaction: juggler.Transaction = {
-    commit: async () => {
-        return;
-    },
-    rollback: async () => {
-        return;
-    }
-};
-testDb.stubs.beginTransaction.resolves(transaction);
-
-
-const baseUserRepository: StubbedInstanceWithSinonAccessor<BaseUserRepository<Roles>> = createStubInstance(BaseUserRepository) as StubbedInstanceWithSinonAccessor<BaseUserRepository<Roles>>;
-
-const passwordResetTokenRepository: StubbedInstanceWithSinonAccessor<PasswordResetTokenRepository<Roles>> = createStubInstance(PasswordResetTokenRepository);
-const refreshTokenRepository: StubbedInstanceWithSinonAccessor<RefreshTokenRepository> = createStubInstance(RefreshTokenRepository);
-const mailService: MailService = new MailService();
-
-const userService: BaseUserService<Roles> = new BaseUserService<Roles>(baseUserRepository, passwordResetTokenRepository, 300000, testDb, mailService);
-const accessTokenService: AccessTokenService<Roles> = new AccessTokenService('accessSecret', 3600000);
-
-const refreshTokenService: RefreshTokenService<Roles> = new RefreshTokenService<Roles>(
-    'refreshSecret',
-    8640000000,
-    'api',
-    baseUserRepository,
-    refreshTokenRepository,
-    userService,
-    accessTokenService,
-    testDb,
-    3600000
-);
+let exampleUser: Omit<BaseUser<TestRoles>, DefaultEntityOmitKeys | 'credentials'>;
+let exampleUserProfile: BaseUserProfile<TestRoles>;
 
 describe('RefreshTokenService', () => {
-    it('generateToken', async () => {
-        const userProfile: BaseUserProfile<Roles> = {
-            [securityId]: '1',
-            id: '1',
-            email: 'user@example.com',
-            roles: [Roles.USER]
+    before(async () => {
+        await clearDatabase();
+        exampleUser = await createExampleUser();
+        exampleUserProfile = {
+            [securityId]: exampleUser.id,
+            id: exampleUser.id,
+            email: exampleUser.email,
+            roles: exampleUser.roles
         };
-        const accessTokenValue: string = await accessTokenService.generateToken(userProfile);
-        await refreshTokenService.generateToken(userProfile, accessTokenValue);
-        sinon.assert.calledOnce(refreshTokenRepository.stubs.create);
+    });
+
+    it('generateToken', async () => {
+        const createSpy: SinonSpy = sinon.spy(testRefreshTokenRepository, 'create');
+        const accessTokenValue: string = await testAccessTokenService.generateToken(exampleUserProfile);
+        await testRefreshTokenService.generateToken(exampleUserProfile, accessTokenValue);
+        sinon.assert.calledOnce(createSpy);
     });
 
     it('refreshToken', async () => {
-        const userProfile: BaseUserProfile<Roles> = {
-            [securityId]: '1',
-            id: '1',
-            email: 'user@example.com',
-            roles: [Roles.USER]
-        };
-        const oldAccessTokenValue: string = await accessTokenService.generateToken(userProfile);
-        const oldRefreshTokenValue: string = (await refreshTokenService.generateToken(userProfile, oldAccessTokenValue)).refreshToken;
+        const oldAccessTokenValue: string = await testAccessTokenService.generateToken(exampleUserProfile);
+        const oldRefreshTokenValue: string = (await testRefreshTokenService.generateToken(exampleUserProfile, oldAccessTokenValue)).refreshToken;
+
+        // we need to wait so that the time part in the new access token is different.
+        // (at least the seconds need to differ)
         await sleep(1000);
-        const findRefreshTokenResult: Omit<RefreshTokenWithRelations, DefaultEntityOmitKeys> = {
-            id: '1',
-            baseUserId: '1',
-            tokenValue: 'jwt-refresh-token',
-            familyId: '1',
-            blacklisted: false,
-            expirationDate: new Date(Date.now() + 8640000000)
-        };
-        const user: Omit<BaseUser<Roles>, DefaultEntityOmitKeys | 'credentials'> = {
-            id: '1',
-            email: 'user@example.com',
-            roles: [Roles.USER]
-        };
 
-        refreshTokenRepository.stubs.findOne.resolves(findRefreshTokenResult as RefreshTokenWithRelations);
-        baseUserRepository.stubs.findById.resolves(user as BaseUser<Roles>);
+        const newTokenObject: TokenObject = await testRefreshTokenService.refreshToken(oldRefreshTokenValue);
 
-        const newTokenObject: TokenObject = await refreshTokenService.refreshToken(oldRefreshTokenValue);
-
+        // access tokens are not stored on the server, therefore they should always be freshly generated.
         expect(newTokenObject.accessToken).to.not.eql(oldAccessTokenValue);
+        // The refresh token is stored on the server. When the token is not expired it should be reused.
         expect(newTokenObject.refreshToken).to.eql(oldRefreshTokenValue);
 
-        findRefreshTokenResult.expirationDate = new Date(Date.now());
-        await sleep(500);
-        refreshTokenRepository.stubs.findOne.resolves(findRefreshTokenResult as RefreshTokenWithRelations);
+        // make the refresh token expired
+        const refreshToken: RefreshToken | null = await testRefreshTokenRepository.findOne({ where: { baseUserId: exampleUser.id } });
+        if (!refreshToken) {
+            throw new Error(`No refresh token found for user with id ${exampleUser.id}`);
+        }
+        await testRefreshTokenRepository.updateById(refreshToken.id, { expirationDate: new Date() });
 
-        const newTokenObjectTwo: TokenObject = await refreshTokenService.refreshToken(oldRefreshTokenValue);
+        await sleep(1000);
+
+        const newTokenObjectTwo: TokenObject = await testRefreshTokenService.refreshToken(oldRefreshTokenValue);
 
         expect(newTokenObjectTwo.accessToken).to.not.eql(oldAccessTokenValue);
         expect(newTokenObjectTwo.refreshToken).to.not.eql(oldRefreshTokenValue);
-    });
+    }).timeout(5000);
+
+    it('refreshToken with transactions', async () => {
+        const promises: Promise<Omit<AuthData<TestRoles>, DefaultEntityOmitKeys>>[] = [];
+        for (let i: number = 0; i < 100; i++) {
+            promises.push(refreshTokenWithTransaction());
+        }
+        await Promise.all(promises);
+    }).timeout(5000);
 
     it('verifyToken', async () => {
-        const userProfile: BaseUserProfile<Roles> = {
-            [securityId]: '1',
-            id: '1',
-            email: 'user@example.com',
-            roles: [Roles.USER]
-        };
-        const accessTokenValue: string = await accessTokenService.generateToken(userProfile);
-        const refreshTokenValue: string = (await refreshTokenService.generateToken(userProfile, accessTokenValue)).refreshToken;
-        const findTokenResult: Omit<RefreshTokenWithRelations, DefaultEntityOmitKeys> = {
-            id: '1',
-            baseUserId: '1',
-            tokenValue: 'jwt-refresh-token',
-            familyId: '1',
-            blacklisted: false,
-            expirationDate: new Date(Date.now() + 8640000000)
-        };
-        refreshTokenRepository.stubs.findOne.resolves(findTokenResult as RefreshTokenWithRelations);
+        const findOneSpy: SinonSpy = sinon.spy(testRefreshTokenRepository, 'findOne');
+        const accessTokenValue: string = await testAccessTokenService.generateToken(exampleUserProfile);
+        const refreshTokenValue: string = (await testRefreshTokenService.generateToken(exampleUserProfile, accessTokenValue)).refreshToken;
 
-        const refreshToken: RefreshTokenWithRelations = await refreshTokenService.verifyToken(refreshTokenValue);
+        const refreshToken: RefreshTokenWithRelations = await testRefreshTokenService.verifyToken(refreshTokenValue);
 
-        sinon.assert.calledWithExactly(refreshTokenRepository.stubs.findOne, { where: { tokenValue: refreshTokenValue } }, undefined);
-        expect(refreshToken).to.eql(findTokenResult);
+        sinon.assert.calledWithExactly(findOneSpy, { where: { tokenValue: refreshTokenValue } }, undefined);
+        expect(refreshToken.baseUserId).to.eql(exampleUser.id);
+        expect(refreshToken.blacklisted).to.eql(false);
+        const expirationDate: Date = new Date(Date.now() + 8640000000);
+        expect(refreshToken.expirationDate.getDate()).to.eql(expirationDate.getDate());
+        expect(refreshToken.expirationDate.getHours()).to.eql(expirationDate.getHours());
+        expect(refreshToken.expirationDate.getMinutes()).to.eql(expirationDate.getMinutes());
 
         const expectedError: HttpErrors.HttpError<401> = new HttpErrors.Unauthorized('Error verifying refresh token: invalid token');
-        const INVALID_TOKEN: string = 'aaa.bbb.ccc';
-        await expect(refreshTokenService.verifyToken(INVALID_TOKEN)).to.be.rejectedWith(expectedError);
+        const invalidToken: string = 'aaa.bbb.ccc';
+        await expect(testRefreshTokenService.verifyToken(invalidToken)).to.be.rejectedWith(expectedError);
+        findOneSpy.restore();
     });
 
     it('revokeToken', async () => {
-        const userProfile: BaseUserProfile<Roles> = {
-            [securityId]: '1',
-            id: '1',
-            email: 'user@example.com',
-            roles: [Roles.USER]
-        };
-        const accessTokenValue: string = await accessTokenService.generateToken(userProfile);
-        const refreshTokenValue: string = (await refreshTokenService.generateToken(userProfile, accessTokenValue)).refreshToken;
-        const findTokenResult: Omit<RefreshTokenWithRelations, DefaultEntityOmitKeys> = {
-            id: '1',
-            baseUserId: '1',
-            tokenValue: 'jwt-refresh-token',
-            familyId: '1',
-            blacklisted: false,
-            expirationDate: new Date(Date.now() + 8640000000)
-        };
-        refreshTokenRepository.stubs.findOne.resolves(findTokenResult as RefreshTokenWithRelations);
-
-        await refreshTokenService.revokeTokenFamily(refreshTokenValue);
-        sinon.assert.calledWithExactly(refreshTokenRepository.stubs.findOne, { where: { tokenValue: refreshTokenValue } });
-        sinon.assert.calledWithExactly(refreshTokenRepository.stubs.deleteAll, { familyId: '1' });
+        const findOneSpy: SinonSpy = sinon.spy(testRefreshTokenRepository, 'findOne');
+        const deleteAllSpy: SinonSpy = sinon.spy(testRefreshTokenRepository, 'deleteAll');
+        const accessTokenValue: string = await testAccessTokenService.generateToken(exampleUserProfile);
+        const refreshTokenValue: string = (await testRefreshTokenService.generateToken(exampleUserProfile, accessTokenValue)).refreshToken;
+        await testRefreshTokenService.revokeTokenFamily(refreshTokenValue);
+        sinon.assert.calledOnceWithExactly(findOneSpy, { where: { tokenValue: refreshTokenValue } });
+        sinon.assert.calledOnce(deleteAllSpy);
+        findOneSpy.restore();
     });
 });
+
+async function refreshTokenWithTransaction(): Promise<Omit<AuthData<TestRoles>, DefaultEntityOmitKeys>> {
+    const tempAccessToken: string = await testAccessTokenService.generateToken(exampleUserProfile);
+    const refreshGrantRefreshToken: string = (await testRefreshTokenService.generateToken(exampleUserProfile, tempAccessToken)).refreshToken;
+
+    await sleep((Math.random() + 1) * 1000);
+
+    const transaction: juggler.Transaction = await testDb.beginTransaction(IsolationLevel.READ_COMMITTED);
+    try {
+        const refreshTokenObject: TokenObject = await testRefreshTokenService.refreshToken(refreshGrantRefreshToken, { transaction: transaction });
+        const encodedJwt: EncodedJwt<TestRoles> = await JwtUtilities.verifyAsync(refreshTokenObject.accessToken, testAccessTokenService['accessTokenSecret']);
+        const user: BaseUser<string> = await testUserRepository.findById(encodedJwt.payload.id, { include: [{ relation: 'biometricCredentials' }] }, { transaction: transaction });
+        await transaction.commit();
+        return {
+            accessToken: {
+                value: refreshTokenObject.accessToken,
+                expirationDate: new Date(Date.now() + testAccessTokenService['accessTokenExpiresInMs'])
+            },
+            refreshToken: {
+                value: refreshTokenObject.refreshToken,
+                expirationDate: new Date(Date.now() + testRefreshTokenService['refreshTokenExpiresInMs'])
+            },
+            roles: encodedJwt.payload.roles,
+            twoFactorEnabled: user.twoFactorEnabled ?? false,
+            userId: encodedJwt.payload.id,
+            biometricCredentials: user.biometricCredentials ?? []
+        };
+    }
+    catch (error) {
+        await transaction.rollback();
+        // eslint-disable-next-line typescript/no-unsafe-member-access
+        throw new HttpErrors.Unauthorized(`Error refreshing token: ${error.message}`);
+    }
+}

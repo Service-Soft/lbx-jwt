@@ -4,20 +4,17 @@ import { DefaultHasOneRepository, HasOneRepository, juggler } from '@loopback/re
 import { HttpErrors } from '@loopback/rest';
 import { securityId } from '@loopback/security';
 import { SinonSpy, StubbedInstanceWithSinonAccessor, createStubInstance, expect, sinon } from '@loopback/testlab';
-import { Transporter } from 'nodemailer';
 
 import { RequestResetPasswordGrant } from '../../controllers/auth/request-reset-password-grant.model';
 import { BcryptUtilities } from '../../encapsulation/bcrypt.utilities';
 import { BaseUser, BaseUserProfile, Credentials, PasswordResetToken } from '../../models';
 import { BaseUserRepository, CredentialsRepository, PasswordResetTokenRepository } from '../../repositories';
-import { BaseMailService, BaseUserService } from '../../services';
+import { BaseUserService } from '../../services';
 import { DefaultEntityOmitKeys } from '../../types';
-
-
-enum Roles {
-    USER = 'user',
-    ADMIN = 'admin'
-}
+import { testBiometricCredentialsService } from '../fixtures/biometric-credentials-service.fixture';
+import { MailService } from '../fixtures/mail-service.fixture';
+import { testBiometricCredentialsRepository } from '../fixtures/repositories.fixture';
+import { TestRoles } from '../fixtures/roles.fixture';
 
 const testDb: StubbedInstanceWithSinonAccessor<juggler.DataSource> = createStubInstance(juggler.DataSource);
 const transaction: juggler.Transaction = {
@@ -30,42 +27,22 @@ const transaction: juggler.Transaction = {
 };
 testDb.stubs.beginTransaction.resolves(transaction);
 
-
-class MailService extends BaseMailService<string> {
-
-    protected readonly WEBSERVER_MAIL: string = 'webserver@test.com';
-
-    protected readonly BASE_RESET_PASSWORD_LINK: string = 'http://localhost:4200/reset-password';
-
-    protected readonly webserverMailTransporter: Transporter;
-
-    protected readonly PRODUCTION: boolean = false;
-
-    protected readonly SAVED_EMAILS_PATH: string = './test-emails';
-
-    protected override readonly LOGO_HEADER_URL: string = 'https://via.placeholder.com/165x165';
-
-    protected override readonly LOGO_FOOTER_URL: string = 'https://via.placeholder.com/500x60';
-
-    protected readonly ADDRESS_LINES: string[] = ['my address', 'my name'];
-}
-
-
-const baseUserRepository: StubbedInstanceWithSinonAccessor<BaseUserRepository<Roles>> = createStubInstance(BaseUserRepository) as StubbedInstanceWithSinonAccessor<BaseUserRepository<Roles>>;
+const baseUserRepository: StubbedInstanceWithSinonAccessor<BaseUserRepository<TestRoles>> = createStubInstance(BaseUserRepository) as StubbedInstanceWithSinonAccessor<BaseUserRepository<TestRoles>>;
 const credentialsRepository: StubbedInstanceWithSinonAccessor<CredentialsRepository> = createStubInstance(CredentialsRepository);
 
-const passwordResetTokenRepository: StubbedInstanceWithSinonAccessor<PasswordResetTokenRepository<Roles>> = createStubInstance(PasswordResetTokenRepository);
+const passwordResetTokenRepository: StubbedInstanceWithSinonAccessor<PasswordResetTokenRepository<TestRoles>> = createStubInstance(PasswordResetTokenRepository);
 const mailService: MailService = new MailService();
 
-const baseUserService: BaseUserService<Roles> = new BaseUserService<Roles>(baseUserRepository, passwordResetTokenRepository, 300000, testDb, mailService);
+const baseUserService: BaseUserService<TestRoles> = new BaseUserService<TestRoles>(baseUserRepository, passwordResetTokenRepository, 300000, testDb, mailService, testBiometricCredentialsService, testBiometricCredentialsRepository);
 
 describe('BaseUserService', () => {
     it('verifyCredentials', async () => {
-        const createBaseUserResult: BaseUser<Roles> = {
+        const createBaseUserResult: BaseUser<TestRoles> = {
             id: '1',
+            // eslint-disable-next-line sonar/no-duplicate-string
             email: 'user@example.com',
-            roles: [Roles.USER],
-            roleValues: Object.values(Roles),
+            roles: [TestRoles.USER],
+            roleValues: Object.values(TestRoles),
             getId: () => '1',
             getIdObject: () => '1',
             toJSON: () => '',
@@ -83,11 +60,11 @@ describe('BaseUserService', () => {
                     return {};
                 }
             }
-        } as unknown as BaseUser<Roles>;
+        } as unknown as BaseUser<TestRoles>;
         baseUserRepository.stubs.create.resolves(createBaseUserResult);
-        const user: BaseUser<Roles> = await baseUserRepository.create({
+        const user: BaseUser<TestRoles> = await baseUserRepository.create({
             email: 'user@example.com',
-            roles: [Roles.USER]
+            roles: [TestRoles.USER]
         });
 
         const createCredentialsResult: Credentials = {
@@ -112,7 +89,7 @@ describe('BaseUserService', () => {
         const credentialsHasOneRepository: StubbedInstanceWithSinonAccessor<HasOneRepository<Credentials>> = createStubInstance(DefaultHasOneRepository);
         credentialsHasOneRepository.stubs.get.resolves(credentials);
         (baseUserRepository.stubs.credentials as unknown) = () => credentialsHasOneRepository;
-        const userFromVerifiedCredentials: BaseUser<Roles> = await baseUserService.verifyCredentials({
+        const userFromVerifiedCredentials: BaseUser<TestRoles> = await baseUserService.verifyCredentials({
             email: 'user@example.com',
             password: 'password',
             toJSON: () => '',
@@ -137,28 +114,28 @@ describe('BaseUserService', () => {
     });
 
     it('convertToUserProfile', () => {
-        const user: Omit<BaseUser<Roles>, DefaultEntityOmitKeys | 'credentials'> = {
+        const user: Omit<BaseUser<TestRoles>, DefaultEntityOmitKeys | 'credentials' | 'biometricCredentials'> = {
             id: '1',
             email: 'user@example.com',
-            roles: [Roles.USER]
+            roles: [TestRoles.USER]
         };
-        const userProfile: BaseUserProfile<Roles> = baseUserService.convertToUserProfile(user as BaseUser<Roles>);
+        const userProfile: BaseUserProfile<TestRoles> = baseUserService.convertToUserProfile(user as BaseUser<TestRoles>);
         expect(userProfile).to.eql({
             [securityId]: '1',
             id: '1',
             email: 'user@example.com',
-            roles: [Roles.USER]
+            roles: [TestRoles.USER]
         });
     });
 
     it('requestResetPassword', async () => {
         const mailSpy: SinonSpy = sinon.spy(mailService, 'sendResetPasswordMail');
-        const user: Omit<BaseUser<Roles>, DefaultEntityOmitKeys | 'credentials'> = {
+        const user: Omit<BaseUser<TestRoles>, DefaultEntityOmitKeys | 'credentials' | 'biometricCredentials'> = {
             id: '1',
             email: 'user@example.com',
-            roles: [Roles.USER]
+            roles: [TestRoles.USER]
         };
-        baseUserRepository.stubs.findOne.resolves(user as BaseUser<Roles>);
+        baseUserRepository.stubs.findOne.resolves(user as BaseUser<TestRoles>);
         const createPasswordResetTokenResult: Omit<PasswordResetToken, DefaultEntityOmitKeys> = {
             id: '1',
             expirationDate: new Date(Date.now() + 300000),

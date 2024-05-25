@@ -6,22 +6,26 @@ import { IsolationLevel, juggler } from '@loopback/repository';
 import { HttpErrors } from '@loopback/rest';
 import { securityId } from '@loopback/security';
 
+import { BaseBiometricCredentialsService } from './base-biometric-credentials.service';
 import { BaseMailService } from './mail/base-mail.service';
+import { AuthenticationResponse } from '../controllers/auth/biometric/authentication-response.model';
 import { LoginCredentials } from '../controllers/auth/login-credentials.model';
 import { RequestResetPasswordGrant } from '../controllers/auth/request-reset-password-grant.model';
 import { BcryptUtilities } from '../encapsulation/bcrypt.utilities';
+import { VerifiedAuthenticationResponse } from '../encapsulation/webauthn.utilities';
 import { LbxJwtBindings } from '../keys';
-import { BaseUser, Credentials } from '../models';
+import { BaseUser, BiometricCredentials, Credentials } from '../models';
 import { BaseUserProfile } from '../models/base-user-profile.model';
 import { PasswordResetToken, PasswordResetTokenWithRelations } from '../models/password-reset-token.model';
-import { BaseUserRepository } from '../repositories';
+import { BaseUserRepository, BiometricCredentialsRepository } from '../repositories';
 import { PasswordResetTokenRepository } from '../repositories/password-reset-token.repository';
 import { DefaultEntityOmitKeys } from '../types';
 
 /**
  * The base user service used for authentication and authorization.
  */
-export class BaseUserService<RoleType extends string> implements UserService<BaseUser<RoleType>, LoginCredentials> {
+// eslint-disable-next-line stylistic/max-len
+export class BaseUserService<RoleType extends string> implements UserService<BaseUser<RoleType>, LoginCredentials | AuthenticationResponse> {
 
     private readonly INVALID_CREDENTIALS_ERROR_MESSAGE: string = 'Invalid email or password.';
 
@@ -35,11 +39,31 @@ export class BaseUserService<RoleType extends string> implements UserService<Bas
         @inject(LbxJwtBindings.DATASOURCE_KEY)
         private readonly dataSource: juggler.DataSource,
         @inject(LbxJwtBindings.MAIL_SERVICE)
-        private readonly mailService: BaseMailService<RoleType>
-    ) {}
+        private readonly mailService: BaseMailService<RoleType>,
+        @inject(LbxJwtBindings.BIOMETRIC_CREDENTIALS_SERVICE)
+        private readonly biometricCredentialsService: BaseBiometricCredentialsService,
+        @inject(LbxJwtBindings.BIOMETRIC_CREDENTIALS_REPOSITORY)
+        private readonly biometricCredentialsRepository: BiometricCredentialsRepository
+    ) { }
 
     // eslint-disable-next-line jsdoc/require-jsdoc
-    async verifyCredentials(credentials: LoginCredentials): Promise<BaseUser<RoleType>> {
+    async verifyCredentials(credentials: LoginCredentials | AuthenticationResponse): Promise<BaseUser<RoleType>> {
+        if (this.isEmailPasswordCredentials(credentials)) {
+            return this.verifyEmailPasswordCredentials(credentials);
+        }
+        return this.verifyBiometricCredentials(credentials);
+    }
+
+    private isEmailPasswordCredentials(value: LoginCredentials | AuthenticationResponse): value is LoginCredentials {
+        return !!(value as LoginCredentials).email;
+    }
+
+    /**
+     * Verify the identity of a user with email and password.
+     * @param credentials - Email and password.
+     * @returns The identified user.
+     */
+    protected async verifyEmailPasswordCredentials(credentials: LoginCredentials): Promise<BaseUser<RoleType>> {
         const foundUser: BaseUser<RoleType> | null = await this.userRepository.findOne({ where: { email: credentials.email } });
         if (!foundUser) {
             throw new HttpErrors.Unauthorized(this.INVALID_CREDENTIALS_ERROR_MESSAGE);
@@ -52,6 +76,41 @@ export class BaseUserService<RoleType extends string> implements UserService<Bas
         }
 
         return foundUser;
+    }
+
+    /**
+     * Verify the identity of a user with a biometric credential.
+     * @param credentials - The biometric credentials.
+     * @returns The identified user.
+     */
+    protected async verifyBiometricCredentials(credentials: AuthenticationResponse): Promise<BaseUser<RoleType>> {
+        const biometricCredentials: BiometricCredentials[] = await this.userRepository.biometricCredentials(credentials.userId).find();
+        const biometricCredential: BiometricCredentials | undefined = biometricCredentials.find(bc => bc.credentialId === credentials.id);
+
+        if (!biometricCredential) {
+            throw new HttpErrors.NotFound('Could not find the biometric credential');
+        }
+
+        const oldCounter: number = biometricCredential.counter;
+
+        try {
+            const verification: VerifiedAuthenticationResponse = await this.biometricCredentialsService.verifyAuthenticationResponse(
+                credentials,
+                biometricCredential
+            );
+            if (!verification.verified) {
+                throw new Error('Could not verify the biometric credential');
+            }
+            await this.biometricCredentialsRepository.updateById(
+                biometricCredential.id,
+                { counter: verification.authenticationInfo.newCounter }
+            );
+            return this.userRepository.findById(credentials.userId);
+        }
+        catch (error) {
+            await this.biometricCredentialsRepository.updateById(biometricCredential.id, { counter: oldCounter });
+            throw new HttpErrors.Unauthorized('Could not verify the biometric credential');
+        }
     }
 
     // eslint-disable-next-line jsdoc/require-jsdoc

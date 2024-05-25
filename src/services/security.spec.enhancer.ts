@@ -35,7 +35,6 @@ export class SecuritySpecEnhancer implements OASEnhancer {
      */
     readonly name: string = 'bearerAuth';
 
-
     /**
      * Modifies the OpenApi specification.
      * @param spec - The modification done to the OpenApi specification.

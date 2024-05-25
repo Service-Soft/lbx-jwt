@@ -7,7 +7,6 @@ import { BaseUser, PasswordResetToken } from '../../models';
 import { BaseMailService } from '../../services';
 import { DefaultEntityOmitKeys } from '../../types';
 
-
 class MailService extends BaseMailService<string> {
 
     protected readonly WEBSERVER_MAIL: string = 'webserver@test.com';
@@ -34,7 +33,8 @@ describe('BaseMailService', () => {
         const userData: Omit<BaseUser<string>, DefaultEntityOmitKeys | 'credentials'> = {
             id: '1',
             email: 'user@test.com',
-            roles: []
+            roles: [],
+            biometricCredentials: []
         };
         const user: BaseUser<string> = new BaseUser(userData);
         const resetTokenData: Omit<PasswordResetToken, DefaultEntityOmitKeys> = {
@@ -46,7 +46,7 @@ describe('BaseMailService', () => {
         const resetToken: PasswordResetToken = new PasswordResetToken(resetTokenData);
         await mailService.sendResetPasswordMail(user, resetToken);
 
-        const createdEmail: string = readFileSync('./test-emails/PasswordReset.test.html', { encoding: 'utf-8' });
+        const createdEmail: string = readFileSync('./test-emails/PasswordReset.test.html', { encoding: 'utf8' });
 
         expect(createdEmail).to.containEql('href="http://localhost:4200/reset-password/my-great-token"');
         expect(createdEmail).to.containEql('<title>Password Reset</title>');

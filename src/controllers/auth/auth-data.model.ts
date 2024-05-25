@@ -1,8 +1,9 @@
 import { inject } from '@loopback/core';
 import { Model, model, property } from '@loopback/repository';
+import { getJsonSchema } from '@loopback/rest';
 
 import { LbxJwtBindings } from '../../keys';
-import { Jwt } from '../../models';
+import { BiometricCredentials, Jwt } from '../../models';
 
 /**
  * The authentication data that is send to the user.
@@ -15,19 +16,8 @@ export class AuthData<RoleType extends string> extends Model {
      * Consists of the string value and the expirationDate value.
      */
     @property({
-        type: 'object',
-        required: true,
-        jsonSchema: {
-            properties: {
-                value: {
-                    type: 'string'
-                },
-                expirationDate: {
-                    type: 'string'
-                }
-            },
-            required: ['value', 'expirationDate']
-        }
+        type: Jwt,
+        required: true
     })
     accessToken: Jwt;
     /**
@@ -35,19 +25,8 @@ export class AuthData<RoleType extends string> extends Model {
      * Consists of the string value and the expirationDate value.
      */
     @property({
-        type: 'object',
-        required: true,
-        jsonSchema: {
-            properties: {
-                value: {
-                    type: 'string'
-                },
-                expirationDate: {
-                    type: 'string'
-                }
-            },
-            required: ['value', 'expirationDate']
-        }
+        type: Jwt,
+        required: true
     })
     refreshToken: Jwt;
     /**
@@ -69,6 +48,17 @@ export class AuthData<RoleType extends string> extends Model {
         required: true
     })
     twoFactorEnabled: boolean;
+    /**
+     * The biometric credentials of the user.
+     * This is an array because a user might have multiple devices with a fingerprint sensor.
+     */
+    @property({
+        type: 'array',
+        itemType: 'object',
+        required: false,
+        jsonSchema: getJsonSchema(BiometricCredentials)
+    })
+    biometricCredentials: BiometricCredentials[];
     /**
      * The id of the currently logged in user.
      */

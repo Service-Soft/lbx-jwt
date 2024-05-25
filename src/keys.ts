@@ -1,9 +1,8 @@
+/* eslint-disable stylistic/max-len */
 
 import { BindingKey } from '@loopback/core';
 
-import { AccessTokenService, BaseUserService, RefreshTokenService } from './services';
-import { BaseMailService } from './services/mail/base-mail.service';
-import { TwoFactorService } from './services/two-factor.service';
+import { AccessTokenService, BaseMailService, BaseUserService, BaseBiometricCredentialsService, RefreshTokenService, TwoFactorService } from './services';
 
 const ONE_HUNDRED_DAYS_IN_MS: number = 8640000000;
 const HOUR_IN_MS: number = 3600000;
@@ -151,4 +150,13 @@ export namespace LbxJwtBindings {
      * Provider for the two factor service.
      */
     export const TWO_FACTOR_SERVICE: BindingKey<TwoFactorService<string>> = BindingKey.create<TwoFactorService<string>>('lbx.jwt.two.factor.service');
+
+    /**
+     * Provider for the biometric credentials service.
+     */
+    export const BIOMETRIC_CREDENTIALS_SERVICE: BindingKey<BaseBiometricCredentialsService> = BindingKey.create<BaseBiometricCredentialsService>('lbx.jwt.biometrics.credentials.service');
+    /**
+     * The key for the repository that stores the password reset token.
+     */
+    export const BIOMETRIC_CREDENTIALS_REPOSITORY: string = 'repositories.BiometricCredentialsRepository';
 }

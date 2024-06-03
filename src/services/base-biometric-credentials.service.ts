@@ -102,15 +102,17 @@ export abstract class BaseBiometricCredentialsService {
         });
         return {
             ...res,
-            registrationInfo: res.registrationInfo == undefined ? undefined : {
-                ...res.registrationInfo,
-                credentialID: res.registrationInfo.credentialID as Base64UrlString,
-                credentialPublicKey: WebauthnUtilities.uint8ToBase64UrlString(res.registrationInfo.credentialPublicKey),
-                attestationObject: WebauthnUtilities.uint8ToBase64UrlString(res.registrationInfo.attestationObject),
-                authenticatorExtensionResults: res.registrationInfo.authenticatorExtensionResults == undefined
-                    ? undefined
-                    : this.transformAuthenticatorExtensionResults(res.registrationInfo.authenticatorExtensionResults)
-            }
+            registrationInfo: res.registrationInfo == undefined
+                ? undefined
+                : {
+                    ...res.registrationInfo,
+                    credentialID: res.registrationInfo.credentialID as Base64UrlString,
+                    credentialPublicKey: WebauthnUtilities.uint8ToBase64UrlString(res.registrationInfo.credentialPublicKey),
+                    attestationObject: WebauthnUtilities.uint8ToBase64UrlString(res.registrationInfo.attestationObject),
+                    authenticatorExtensionResults: res.registrationInfo.authenticatorExtensionResults == undefined
+                        ? undefined
+                        : this.transformAuthenticatorExtensionResults(res.registrationInfo.authenticatorExtensionResults)
+                }
         };
     }
 
@@ -131,11 +133,13 @@ export abstract class BaseBiometricCredentialsService {
                 scope: WebauthnUtilities.uint8ToBase64UrlString(authenticatorExtensionResults.devicePubKey?.scope),
                 aaguid: WebauthnUtilities.uint8ToBase64UrlString(authenticatorExtensionResults.devicePubKey?.aaguid)
             },
-            uvm: authenticatorExtensionResults.uvm == undefined ? undefined : {
-                uvm: authenticatorExtensionResults.uvm.uvm == undefined
-                    ? undefined
-                    : authenticatorExtensionResults.uvm.uvm.map(u => WebauthnUtilities.uint8ToBase64UrlString(u))
-            }
+            uvm: authenticatorExtensionResults.uvm == undefined
+                ? undefined
+                : {
+                    uvm: authenticatorExtensionResults.uvm.uvm == undefined
+                        ? undefined
+                        : authenticatorExtensionResults.uvm.uvm.map(u => WebauthnUtilities.uint8ToBase64UrlString(u))
+                }
         };
     }
 

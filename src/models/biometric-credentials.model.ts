@@ -57,6 +57,20 @@ export class BiometricCredentials extends Entity {
     counter: number;
 
     /**
+     * The date at which the biometric credential expires.
+     * This is only used for registration purposes,
+     * to clean up old registrations that are pending.
+     */
+    @property({
+        type: 'date',
+        required: false,
+        jsonSchema: {
+            nullable: true
+        }
+    })
+    expirationDate: Date | undefined;
+
+    /**
      * The user that this credentials belong to.
      */
     @property({

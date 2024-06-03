@@ -484,6 +484,8 @@ export class LbxJwtAuthController<RoleType extends string> {
             userProfile.id,
             { include: [{ relation: 'biometricCredentials' }] }
         );
+        // TODO: Maybe move this to a cron job?
+        await this.biometricCredentialsRepository.deleteAll({ baseUserId: baseUser.id, expirationDate: { lte: new Date() } });
         const options: BiometricRegistrationOptions = await this.biometricCredentialsService.generateRegistrationOptions(
             baseUser.email,
             baseUser.biometricCredentials ?? []
@@ -492,7 +494,8 @@ export class LbxJwtAuthController<RoleType extends string> {
             challenge: options.challenge,
             credentialId: PENDING as Base64UrlString,
             publicKey: PENDING as Base64UrlString,
-            counter: 0
+            counter: 0,
+            expirationDate: new Date(Date.now() + 8640000000)
         };
         await this.baseUserRepository.biometricCredentials(baseUser.id).create(credentials);
         return options;
@@ -565,7 +568,8 @@ export class LbxJwtAuthController<RoleType extends string> {
             await this.biometricCredentialsRepository.updateById(existingBiometricCredential.id, {
                 credentialId: res.registrationInfo?.credentialID,
                 publicKey: res.registrationInfo?.credentialPublicKey,
-                counter: res.registrationInfo?.counter
+                counter: res.registrationInfo?.counter,
+                expirationDate: undefined
             });
         }
         const biometricCredentials: BiometricCredentials[] = await this.baseUserRepository.biometricCredentials(baseUser.id).find();

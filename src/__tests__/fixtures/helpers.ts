@@ -86,7 +86,8 @@ export async function registerBiometricCredential(user: Omit<BaseUser<TestRoles>
         challenge: options.challenge,
         credentialId: PENDING as Base64UrlString,
         publicKey: PENDING as Base64UrlString,
-        counter: 0
+        counter: 0,
+        expirationDate: undefined
     };
     const pendingCredential: BiometricCredentials = await testUserRepository.biometricCredentials(user.id).create(credentials);
 

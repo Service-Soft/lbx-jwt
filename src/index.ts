@@ -5,3 +5,4 @@ export * from './repositories';
 export * from './services';
 export * from './controllers';
 export * from './types';
+export * from './encapsulation/bcrypt.utilities';

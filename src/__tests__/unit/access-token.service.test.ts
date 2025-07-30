@@ -28,7 +28,7 @@ describe('AccessTokenService', () => {
         const accessToken: string = await accessTokenService.generateToken(USER_PROFILE);
         expect(accessToken).to.not.be.empty();
 
-        await sleep(1000); // Is needed for the jwt to be different.
+        await sleep(1500); // Is needed for the jwt to be different.
 
         const accessTokenTwo: string = await accessTokenService.generateToken(USER_PROFILE);
         expect(accessToken).to.not.equal(accessTokenTwo);
